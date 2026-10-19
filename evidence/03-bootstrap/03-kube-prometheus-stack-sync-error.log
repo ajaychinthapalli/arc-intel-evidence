@@ -1,0 +1,18 @@
+# Captured: Sun 2026-10-18 18:12 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 76. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ kubectl -n argocd get application kube-prometheus-stack \
+  -o jsonpath='{range .status.conditions[*]}{.type}: {.message}{"\n"}{end}{.status.operationState.phase}: {.status.operationState.message}{"\n"}'
+kubectl -n argocd get application [REDACTED_CLUSTER_NAME]-root \
+  -o jsonpath='{.status.operationState.phase}: {.status.operationState.message}{"\n"}'
+kubectl -n argocd logs deploy/argocd-repo-server --since=60m | grep -i -E 'error|deadline|prometheus' | tail -5
+Running: one or more synchronization tasks are not valid: namespace kube-system is not permitted in project 'arc-platform'. Retrying attempt #4 at 1:12AM.
+Running: waiting for healthy state of argoproj.io/Application/kube-prometheus-stack
+Defaulted container "repo-server" out of: repo-server, copyutil (init)
+time="2026-10-19T01:11:44Z" level=info msg="finished call" grpc.code=OK grpc.component=server grpc.method=GenerateManifest grpc.method_type=unary grpc.request.deadline="2026-10-19T01:12:44Z" grpc.service=repository.RepoServerService grpc.start_time="2026-10-19T01:11:44Z" grpc.time_ms=101.231 peer.address="[REDACTED_IP_ADDRESS]:51182" protocol=grpc
+time="2026-10-19T01:11:44Z" level=info msg="started call" grpc.component=server grpc.method=GenerateManifest grpc.method_type=unary grpc.request.deadline="2026-10-19T01:12:44Z" grpc.service=repository.RepoServerService grpc.start_time="2026-10-19T01:11:44Z" grpc.time_ms=0.017 peer.address="[REDACTED_IP_ADDRESS]:51182" protocol=grpc
+time="2026-10-19T01:11:44Z" level=info msg="finished call" grpc.code=OK grpc.component=server grpc.method=GenerateManifest grpc.method_type=unary grpc.request.deadline="2026-10-19T01:12:44Z" grpc.service=repository.RepoServerService grpc.start_time="2026-10-19T01:11:44Z" grpc.time_ms=5.204 peer.address="[REDACTED_IP_ADDRESS]:51182" protocol=grpc
+time="2026-10-19T01:11:49Z" level=info msg="started call" grpc.component=server grpc.method=Check grpc.method_type=unary grpc.request.deadline="2026-10-19T01:12:49Z" grpc.service=grpc.health.v1.Health grpc.start_time="2026-10-19T01:11:49Z" grpc.time_ms=0.049 peer.address="127.0.0.1:54820" protocol=grpc
+time="2026-10-19T01:11:49Z" level=info msg="finished call" grpc.code=OK grpc.component=server grpc.method=Check grpc.method_type=unary grpc.request.deadline="2026-10-19T01:12:49Z" grpc.service=grpc.health.v1.Health grpc.start_time="2026-10-19T01:11:49Z" grpc.time_ms=0.11 peer.address="127.0.0.1:54820" protocol=grpc
+bash-5.3$

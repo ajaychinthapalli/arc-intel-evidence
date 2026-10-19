@@ -1,0 +1,15 @@
+# Local IDE and operating-system files
+.idea/
+.DS_Store
+
+# Local environment and credential files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Editor temporary files
+*.swp
+*.swo
+*~

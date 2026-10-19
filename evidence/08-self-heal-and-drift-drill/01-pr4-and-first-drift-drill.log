@@ -1,0 +1,108 @@
+# Captured: Sun 2026-10-18 19:19 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: attachment e71035d5-attachment.txt. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ git switch -c argocd/arc-self-heal
+python3 - <<'EOF'
+p = "clusters/[REDACTED_CLUSTER_NAME]/apps/20-arc.yaml"
+s = open(p).read()
+s = s.replace("  syncPolicy:\n    syncOptions: [ServerSideApply=true]",
+              "  syncPolicy:\n    automated: {prune: false, selfHeal: true}\n    syncOptions: [ServerSideApply=true]")
+s = s.replace("      syncPolicy:\n        syncOptions: [ServerSideApply=true]",
+              "      syncPolicy:\n        automated: {prune: false, selfHeal: true}\n        syncOptions: [ServerSideApply=true]")
+open(p, "w").write(s)
+EOF
+grep -n "automated" clusters/[REDACTED_CLUSTER_NAME]/apps/20-arc.yaml     # expect 2 lines
+git commit -am "ARC apps: automated sync with self-heal (prune off)" && git push -u origin argocd/arc-self-heal
+gh pr create --base main --title "ARC apps: enable self-heal" --body "Argo CD reverts manual changes to the ARC controller and runner sets. prune stays off."
+gh pr merge --merge --delete-branch && git switch main && git pull
+Switched to a new branch 'argocd/arc-self-heal'
+5:#  - No `automated` sync yet: review `argocd app diff` and sync by hand once. Turn on automated
+28:    automated: {prune: false, selfHeal: true}
+68:        automated: {prune: false, selfHeal: true}
+[argocd/arc-self-heal 6a4cc86] ARC apps: automated sync with self-heal (prune off)
+ 1 file changed, 2 insertions(+)
+Enumerating objects: 11, done.
+Counting objects: 100% (11/11), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (6/6), done.
+Writing objects: 100% (6/6), 664 bytes | 664.00 KiB/s, done.
+Total 6 (delta 4), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (4/4), completed with 4 local objects.
+remote: 
+remote: Create a pull request for 'argocd/arc-self-heal' on GitHub by visiting:
+remote:      https://github.com/ajaychinthapalli/arc-intel/pull/new/argocd/arc-self-heal
+remote: 
+To https://github.com/ajaychinthapalli/arc-intel.git
+ * [new branch]      argocd/arc-self-heal -> argocd/arc-self-heal
+branch 'argocd/arc-self-heal' set up to track 'origin/argocd/arc-self-heal'.
+
+Creating pull request for argocd/arc-self-heal into main in ajaychinthapalli/arc-intel
+
+https://github.com/ajaychinthapalli/arc-intel/pull/4
+✓ Merged pull request ajaychinthapalli/arc-intel#4 (ARC apps: enable self-heal)
+remote: Enumerating objects: 1, done.
+remote: Counting objects: 100% (1/1), done.
+remote: Total 1 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+Unpacking objects: 100% (1/1), 910 bytes | 455.00 KiB/s, done.
+From https://github.com/ajaychinthapalli/arc-intel
+ * branch            main       -> FETCH_HEAD
+   2207959..2a8b39f  main       -> origin/main
+Updating 2207959..2a8b39f
+Fast-forward
+ clusters/[REDACTED_CLUSTER_NAME]/apps/20-arc.yaml | 2 ++
+ 1 file changed, 2 insertions(+)
+✓ Deleted local branch argocd/arc-self-heal and switched to branch main
+✓ Deleted remote branch argocd/arc-self-heal
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+Already up to date.
+bash-5.3$ kubectl -n arc-runners patch autoscalingrunnerset arc-runner-set --type=merge -p '{"spec":{"maxRunners":10}}'
+sleep 180
+kubectl -n arc-runners get autoscalingrunnerset arc-runner-set -o jsonpath='{.spec.maxRunners}{"\n"}'   # expect 3 again
+ask "Has anyone changed arc-runners/arc-runner-set outside Git recently? Who, when, and what happened to the change?"
+autoscalingrunnerset.actions.github.com/arc-runner-set patched
+10
+**Posture: 🔴 DRIFTED** — `arc-runners/arc-runner-set` is managed by Argo CD but is **OutOfSync** due to one confirmed out-of-band write. Self-heal is **off**, so Argo has not reverted it.
+
+---
+
+## What happened
+
+| Time (UTC) | Who | What | Tool | Origin |
+|---|---|---|---|---|
+| **2026-10-19 02:16:02** | `[REDACTED_AWS_ARN]` from `[REDACTED_IP_ADDRESS]` | `spec.maxRunners` bumped **3 → 10** | `kubectl patch` (darwin/arm64) | **Out-of-band (drift)** |
+| 2026-10-19 02:08:32 | Argo CD application controller | Last legitimate sync (by `admin`) | ArgoCD | In-band ✅ |
+| 2026-10-16 20:22:52 | `[REDACTED_AWS_ARN]` | Helm upgrade | `Helm/4.2.4` | In-band ✅ |
+| 2026-10-13 04:52:15 | `[REDACTED_AWS_ARN]` | Helm upgrade | `Helm/4.2.4` | In-band ✅ |
+
+---
+
+## The key facts
+
+- **Who:** The AWS **root account** (`[REDACTED_AWS_ARN]`) — no IAM session name, indicating the root user authenticated directly, not via a role.
+- **When:** **2026-10-19 02:16:02 UTC** — roughly **7 minutes and 30 seconds after** Argo CD's last successful sync.
+- **What:** `spec.maxRunners` patched from **3 → 10** via `kubectl patch` on a macOS/ARM64 machine (IP `[REDACTED_IP_ADDRESS]`).
+- **Argo CD state:** Sync status is `OutOfSync`, health is `Healthy`. **Automated sync and self-heal are both off**, so Argo detected the drift but did not revert it. The live change is still in place.
+- **Identity confidence:** EKS audit log (`identity_source: eks_audit_log`) — attribution is exact.
+
+---
+
+## ⚠️ Why this matters
+
+1. **AWS root account used directly** — this is a critical security process violation independent of the ARC change. Root should never be used for operational cluster access.
+2. **Git is no longer the source of truth** — anyone relying on the Argo CD repo (`ghcr.io/actions/actions-runner-controller-charts`, chart `0.14.2`) will get `maxRunners: 3` on the next sync, wiping the live value of 10 without warning.
+
+---
+
+## Recommended Actions
+
+| Priority | Owner | Action |
+|---|---|---|
+| 🔴 **Immediate** | Security / Cloud team | Investigate root account usage — rotate credentials, enable MFA if not set, and determine why root was used instead of a named IAM user/role. |
+| 🔴 **Immediate** | Platform / GitOps team | Decide: is `maxRunners: 10` intentional? If yes → open a PR to update the Helm values in the Argo CD repo path, then sync. If no → trigger an Argo sync to revert to `maxRunners: 3`. |
+| 🟡 **Soon** | Platform team | Enable **self-heal** on the `arc-runners-arc-runner-set` Argo CD Application so future out-of-band changes are automatically reverted. |
+| 🟡 **Soon** | Platform team | Restrict `kubectl` / cluster API access via IAM policy — no root, use least-privilege roles with session names for traceability. |
+
+> Want me to generate the guarded JSON patch to revert `maxRunners` to 3, or draft the Helm values diff to persist the 10-runner limit in Git?
+bash-5.3$

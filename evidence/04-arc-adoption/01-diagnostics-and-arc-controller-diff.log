@@ -1,0 +1,47 @@
+# Captured: Sun 2026-10-18 18:24 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 86. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ # arc-intel: pod state, events and logs
+kubectl -n arc-intel get pods,externalsecret
+kubectl -n arc-intel describe pod -l app.kubernetes.io/name=arc-intel-mcp | sed -n '/Events:/,$p' | tail -15
+kubectl -n arc-intel logs deploy/arc-intel-mcp --tail=30
+
+# runner set: why the comparison is Unknown
+kubectl -n argocd get application arc-runners-arc-runner-set \
+  -o jsonpath='{range .status.conditions[*]}{.type}: {.message}{"\n"}{end}'
+
+# controller adoption diff (review only, don't sync yet)
+argocd app diff arc-controller
+NAME                                                        STORETYPE            STORE                 REFRESH INTERVAL   STATUS         READY   LAST SYNC
+externalsecret.external-secrets.io/arc-intel-argocd-token   ClusterSecretStore   aws-secrets-manager   1h                 SecretSynced   True    7m32s
+No resources found in arc-intel namespace.
+error: timed out waiting for the condition
+ComparisonError: Failed to load target state: failed to generate manifest for source 1 of 2: rpc error: code = Unknown desc = failed to execute helm template command: failed running helm: `helm template . --name-template arc-runner-set --namespace arc-runners --kube-version 1.36.4 --values <path to cached source>/clusters/[REDACTED_CLUSTER_NAME]/runner-scale-sets/arc-runner-set/values.yaml <api versions removed> --include-crds` failed exit status 1: Error: execution error at (gha-runner-scale-set/templates/manager_role_binding.yaml:42:11): No gha-rs-controller deployment found using label (app.kubernetes.io/part-of=gha-rs-controller). Consider setting controllerServiceAccount.name in values.yaml to be explicit if you think the discovery is wrong.
+
+Use --debug flag to render out invalid YAML
+
+===== /ServiceAccount arc-systems/arc-gha-rs-controller ======
+4a5
+>     argocd.argoproj.io/tracking-id: arc-controller:/ServiceAccount:arc-systems/arc-gha-rs-controller
+
+===== apps/Deployment arc-systems/arc-gha-rs-controller ======
+4a5
+>     argocd.argoproj.io/tracking-id: arc-controller:apps/Deployment:arc-systems/arc-gha-rs-controller
+
+===== rbac.authorization.k8s.io/ClusterRole /arc-gha-rs-controller ======
+4a5
+>     argocd.argoproj.io/tracking-id: arc-controller:rbac.authorization.k8s.io/ClusterRole:arc-systems/arc-gha-rs-controller
+
+===== rbac.authorization.k8s.io/ClusterRoleBinding /arc-gha-rs-controller ======
+4a5
+>     argocd.argoproj.io/tracking-id: arc-controller:rbac.authorization.k8s.io/ClusterRoleBinding:arc-systems/arc-gha-rs-controller
+
+===== rbac.authorization.k8s.io/Role arc-systems/arc-gha-rs-controller-listener ======
+4a5
+>     argocd.argoproj.io/tracking-id: arc-controller:rbac.authorization.k8s.io/Role:arc-systems/arc-gha-rs-controller-listener
+
+===== rbac.authorization.k8s.io/RoleBinding arc-systems/arc-gha-rs-controller-listener ======
+4a5
+>     argocd.argoproj.io/tracking-id: arc-controller:rbac.authorization.k8s.io/RoleBinding:arc-systems/arc-gha-rs-controller-listener
+bash-5.3$

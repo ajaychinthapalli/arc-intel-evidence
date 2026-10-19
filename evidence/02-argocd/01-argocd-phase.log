@@ -1,0 +1,39 @@
+# Captured: Sun 2026-10-18 16:56 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 62. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ $S argocd
+
+==> Argo CD (chart 10.10.5)
+Release "argocd" does not exist. Installing it now.
+NAME: argocd
+LAST DEPLOYED: Sun Oct 18 16:55:38 2026
+NAMESPACE: argocd
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+NOTES:
+In order to access the server UI you have the following options:
+
+1. kubectl port-forward service/argocd-server -n argocd 8080:443
+
+    and then open the browser on http://localhost:8080 and accept the certificate
+
+2. enable ingress in the values file `server.ingress.enabled` and either
+      - Add the annotation for ssl passthrough: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#option-1-ssl-passthrough
+      - Set the `configs.params."server.insecure"` in the values file and terminate SSL at your ingress: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#option-2-multiple-ingress-objects-and-hosts
+
+
+After reaching the UI the first time you can login with username: admin and the random password generated during the installation. You can find the password by running:
+
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+(You should delete the initial secret afterwards as suggested by the Getting Started Guide: https://argo-cd.readthedocs.io/en/stable/getting_started/#4-login-using-the-cli)
+
+==> Repository credentials (read-only) for https://github.com/ajaychinthapalli/arc-intel.git
+secret/repo-gitops created
+
+==> arc-intel read-only token -> Secrets Manager arc/argocd-token
+jq: parse error: Invalid numeric literal at line 1, column 8
+bash-5.3$

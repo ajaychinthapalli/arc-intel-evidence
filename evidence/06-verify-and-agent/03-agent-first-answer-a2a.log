@@ -1,0 +1,112 @@
+# Captured: Sun 2026-10-18 18:59 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 116. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ kubectl -n kagent port-forward svc/kagent-controller 8083:8083 >/dev/null 2>&1 &
+sleep 3
+ask() {
+  curl -s --max-time 180 http://localhost:8083/api/a2a/kagent/arc-compliance-agent/ \
+    -H 'Content-Type: application/json' \
+    -d "$(jq -n --arg t "$1" '{jsonrpc:"2.0", id:"1", method:"message/send",
+          params:{message:{role:"user", messageId:("m-" + (now|tostring)), parts:[{kind:"text", text:$t}]}}}')" \
+  | jq -r 'if .error then "error: \(.error.message)" else ([.. | objects | select(.kind? == "text") | .text] | last) end'
+}
+ask "How compliant are our ARC runners? Worst issues first, and how do I fix each in Git?"
+[3] 11011
+Here's your full fleet posture — **Grade B / Score 78 / `non_compliant`** (violations live in the source of truth; fixes belong in Git/Helm, not kubectl).
+
+---
+
+## Fleet Summary
+
+| | |
+|---|---|
+| **Fleet grade** | **B (78/100)** |
+| **Controller** | `arc-gha-rs-controller` v0.14.2 ✅ healthy, no version skew |
+| **Scale sets** | 1 (`arc-runners/arc-runner-set`) |
+| **Posture** | `non_compliant` — source of truth breaks policy |
+
+---
+
+## Violations — Worst First
+
+| Sev | Rule | Path | What | Fix in Git |
+|-----|------|------|------|------------|
+| 🔴 **HIGH** | ARC-005 · Supply-chain | `spec.template.spec.containers[runner].image` | Image is `latest` (unpinned) | Pin to digest or explicit tag |
+| 🟠 **MEDIUM** | ARC-010 · Reliability | `spec.template.spec.containers[runner].resources` | `limits.cpu` is missing (memory limit exists) | Add `limits.cpu` |
+| 🟠 **MEDIUM** | ARC-011 · Runtime-security | `spec.template.spec.containers[runner].securityContext` | `allowPrivilegeEscalation` not set to `false` | Set it explicitly |
+| 🟡 **LOW** | ARC-013 · Governance | `metadata.labels` | Missing labels: `owner`, `cost-center` | Add via chart's `labels:` block |
+
+---
+
+## Why It Matters (HIGH item)
+
+**ARC-005 — Unpinned image (`latest`):** Any registry push replaces the image your runners pull without a Helm/Git change. This silently breaks reproducibility, can introduce a supply-chain compromise, and makes rollbacks impossible. Digest-pinning is the only guarantee of immutability.
+
+---
+
+## Recommended Actions (all fixes go in a Git PR to your Helm values file)
+
+### 1 🔴 Pin the runner image — `ARC-005`
+```yaml
+# values.yaml
+template:
+  spec:
+    containers:
+      - name: runner
+        # Replace with the exact digest from your image registry
+        image: ghcr.io/actions/actions-runner:2.323.0@sha256:<digest>
+```
+> Get the digest: `docker buildx imagetools inspect ghcr.io/actions/actions-runner:2.323.0`
+
+---
+
+### 2 🟠 Add a CPU limit — `ARC-010`
+```yaml
+# values.yaml
+template:
+  spec:
+    containers:
+      - name: runner
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "2000m"   # ← add this; tune to your workload
+            memory: "2Gi"
+```
+
+---
+
+### 3 🟠 Disable privilege escalation — `ARC-011`
+```yaml
+# values.yaml
+template:
+  spec:
+    containers:
+      - name: runner
+        securityContext:
+          allowPrivilegeEscalation: false
+```
+
+---
+
+### 4 🟡 Add ownership labels — `ARC-013`
+```yaml
+# values.yaml
+labels:
+  owner: "platform-team"       # ← your team name
+  cost-center: "eng-123"       # ← your cost-center code
+```
+
+---
+
+## Next Steps
+
+1. **Open a PR** with the four changes above to your Helm values file.
+2. **Merge & Helm upgrade** (or Argo CD sync if GitOps-managed) — no kubectl patching needed.
+3. **Re-run compliance** after deploy: `arc_check_compliance` should return score 100 / grade A.
+
+Want me to generate a full diff of the values file, check drift on this scale set, or propose the guarded JSON patch for an emergency in-place fix?
+bash-5.3$

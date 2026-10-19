@@ -1,0 +1,15 @@
+# Captured: Sun 2026-10-18 15:15 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 36. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ kubectl get ns
+NAME                STATUS   AGE
+amazon-cloudwatch   Active   28d
+arc-runners         Active   5d17h
+arc-systems         Active   5d17h
+default             Active   28d
+kagent              Active   5d17h
+kube-node-lease     Active   28d
+kube-public         Active   28d
+kube-system         Active   28d
+radar               Active   18d

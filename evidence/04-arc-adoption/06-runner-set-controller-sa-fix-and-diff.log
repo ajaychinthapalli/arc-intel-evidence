@@ -1,0 +1,51 @@
+# Captured: Sun 2026-10-18 18:36 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 96. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ F=clusters/[REDACTED_CLUSTER_NAME]/runner-scale-sets/arc-runner-set/values.yaml
+grep -q '^controllerServiceAccount:' "$F" || cat >> "$F" <<'EOF'
+# Explicit because Argo CD renders without cluster access (the chart's controller lookup returns nothing).
+controllerServiceAccount:
+  namespace: arc-systems
+  name: arc-gha-rs-controller
+EOF
+tail -4 "$F"
+git add "$F" && git commit -m "arc-runner-set: name the ARC controller ServiceAccount explicitly for Argo CD" && git push
+argocd app get arc-runners-arc-runner-set --hard-refresh | grep -E 'Sync Status|ComparisonError'
+argocd app diff arc-runners-arc-runner-set
+# Explicit because Argo CD renders without cluster access (the chart's controller lookup returns nothing).
+controllerServiceAccount:
+  namespace: arc-systems
+  name: arc-gha-rs-controller
+[main fbe7656] arc-runner-set: name the ARC controller ServiceAccount explicitly for Argo CD
+ 1 file changed, 4 insertions(+)
+Enumerating objects: 13, done.
+Counting objects: 100% (13/13), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (5/5), done.
+Writing objects: 100% (7/7), 805 bytes | 805.00 KiB/s, done.
+Total 7 (delta 3), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (3/3), completed with 3 local objects.
+To https://github.com/ajaychinthapalli/arc-intel.git
+   4e79346..fbe7656  main -> main
+Sync Status:        OutOfSync from 0.14.2
+
+===== /ServiceAccount arc-runners/arc-runner-set-gha-rs-no-permission ======
+4a5
+>     argocd.argoproj.io/tracking-id: arc-runners-arc-runner-set:/ServiceAccount:arc-runners/arc-runner-set-gha-rs-no-permission
+
+===== actions.github.com/AutoscalingRunnerSet arc-runners/arc-runner-set ======
+11c11,12
+<     actions.github.com/values-hash: 212575f22c3c701345cfe6a22683236f4f853d7dec3da2455204742d83b1bfc
+---
+>     actions.github.com/values-hash: aa57063feecf5b1fd3173ecb329b53c73d0fe53d94f1f4791fe8b47391df2e7
+>     argocd.argoproj.io/tracking-id: arc-runners-arc-runner-set:actions.github.com/AutoscalingRunnerSet:arc-runners/arc-runner-set
+
+===== rbac.authorization.k8s.io/Role arc-runners/arc-runner-set-gha-rs-manager ======
+4a5
+>     argocd.argoproj.io/tracking-id: arc-runners-arc-runner-set:rbac.authorization.k8s.io/Role:arc-runners/arc-runner-set-gha-rs-manager
+
+===== rbac.authorization.k8s.io/RoleBinding arc-runners/arc-runner-set-gha-rs-manager ======
+4a5
+>     argocd.argoproj.io/tracking-id: arc-runners-arc-runner-set:rbac.authorization.k8s.io/RoleBinding:arc-runners/arc-runner-set-gha-rs-manager
+bash-5.3$

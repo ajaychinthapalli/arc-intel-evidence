@@ -1,0 +1,83 @@
+# Captured: Sun 2026-10-18 18:39 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: attachment 7cea9d59-attachment.txt. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ kubectl -n arc-systems get pods -l app.kubernetes.io/component=runner-scale-set-listener
+kubectl -n arc-systems logs -l app.kubernetes.io/component=runner-scale-set-listener --tail=30
+kubectl -n arc-systems logs deploy/arc-gha-rs-controller --since=10m | grep -iE 'error|listener' | tail -10
+NAME                               READY   STATUS        RESTARTS   AGE
+arc-runner-set-694df84f-listener   0/1     Terminating   0          17s
+time=2026-10-19T01:38:11.200Z level=INFO source=github.com/actions/scaleset@v0.4.0/client.go:988 msg="refreshing token" githubConfigUrl=https://github.com/ajaychinthapalli/arc-runners-sandbox
+time=2026-10-19T01:38:11.202Z level=INFO source=github.com/actions/scaleset@v0.4.0/client.go:806 msg="getting access token for GitHub App auth" accessTokenURL=https://api.github.com/app/installations/[REDACTED_GITHUB_INSTALLATION_ID]/access_tokens
+time=2026-10-19T01:38:11.203Z level=DEBUG source=github.com/hashicorp/go-retryablehttp@v0.7.8/client.go:678 msg="performing request" method=POST url=https://api.github.com/app/installations/[REDACTED_GITHUB_INSTALLATION_ID]/access_tokens
+2026/10/19 01:38:11 Application returned an error: failed to create actions message session client: failed to create message session: failed to do the session request: failed to create new actions service request: failed to issue update token if needed: failed to get runner registration token on refresh: failed to fetch access token: request POST https://api.github.com/app/installations/[REDACTED_GITHUB_INSTALLATION_ID]/access_tokens failed(status="404 Not Found", github_request_id="E108:3E5AF9:5342B2D:10DFE6F3:6AD57483"): failed to get access token for GitHub App auth (404 Not Found): : Integration not found
+2026-10-19T01:37:55Z	INFO	AutoscalingListener	Listener pod is terminated	{"version": "0.14.2", "autoscalinglistener": {"name":"arc-runner-set-694df84f-listener","namespace":"arc-systems"}, "namespace": "arc-systems", "name": "arc-runner-set-694df84f-listener", "reason": "Error", "message": ""}
+2026-10-19T01:37:55Z	INFO	AutoscalingListener	Creating a listener pod	{"version": "0.14.2", "autoscalinglistener": {"name":"arc-runner-set-694df84f-listener","namespace":"arc-systems"}}
+2026-10-19T01:37:55Z	INFO	AutoscalingListener	Creating listener pod	{"version": "0.14.2", "autoscalinglistener": {"name":"arc-runner-set-694df84f-listener","namespace":"arc-systems"}, "namespace": "arc-systems", "name": "arc-runner-set-694df84f-listener"}
+2026-10-19T01:37:55Z	INFO	AutoscalingListener	Created listener pod	{"version": "0.14.2", "autoscalinglistener": {"name":"arc-runner-set-694df84f-listener","namespace":"arc-systems"}, "namespace": "arc-systems", "name": "arc-runner-set-694df84f-listener"}
+2026-10-19T01:37:55Z	INFO	AutoscalingListener	Listener pod is not ready	{"version": "0.14.2", "autoscalinglistener": {"name":"arc-runner-set-694df84f-listener","namespace":"arc-systems"}, "namespace": "arc-systems", "name": "arc-runner-set-694df84f-listener"}
+2026-10-19T01:37:55Z	INFO	AutoscalingListener	Listener pod is not ready	{"version": "0.14.2", "autoscalinglistener": {"name":"arc-runner-set-694df84f-listener","namespace":"arc-systems"}, "namespace": "arc-systems", "name": "arc-runner-set-694df84f-listener"}
+2026-10-19T01:38:12Z	INFO	AutoscalingListener	Listener pod is terminated	{"version": "0.14.2", "autoscalinglistener": {"name":"arc-runner-set-694df84f-listener","namespace":"arc-systems"}, "namespace": "arc-systems", "name": "arc-runner-set-694df84f-listener", "reason": "Error", "message": ""}
+2026-10-19T01:38:12Z	INFO	AutoscalingListener	Deleting the listener pod	{"version": "0.14.2", "autoscalinglistener": {"name":"arc-runner-set-694df84f-listener","namespace":"arc-systems"}, "namespace": "arc-systems", "name": "arc-runner-set-694df84f-listener"}
+2026-10-19T01:38:12Z	INFO	AutoscalingListener	Listener pod is terminated	{"version": "0.14.2", "autoscalinglistener": {"name":"arc-runner-set-694df84f-listener","namespace":"arc-systems"}, "namespace": "arc-systems", "name": "arc-runner-set-694df84f-listener", "reason": "Error", "message": ""}
+2026-10-19T01:38:13Z	INFO	AutoscalingListener	Listener pod is terminated	{"version": "0.14.2", "autoscalinglistener": {"name":"arc-runner-set-694df84f-listener","namespace":"arc-systems"}, "namespace": "arc-systems", "name": "arc-runner-set-694df84f-listener", "reason": "Error", "message": ""}
+bash-5.3$ kubectl get ns arc-intel -o jsonpath='{.metadata.annotations}'; echo
+{"argocd.argoproj.io/tracking-id":"arc-intel:/Namespace:arc-intel/arc-intel","kubectl.kubernetes.io/last-applied-configuration":"{\"apiVersion\":\"v1\",\"kind\":\"Namespace\",\"metadata\":{\"annotations\":{\"argocd.argoproj.io/tracking-id\":\"arc-intel:/Namespace:arc-intel/arc-intel\"},\"labels\":{\"pod-security.kubernetes.io/enforce\":\"restricted\"},\"name\":\"arc-intel\"}}\n"}
+bash-5.3$ K=clusters/[REDACTED_CLUSTER_NAME]/manifests/arc-intel/kustomization.yaml
+cat >> "$K" <<'EOF'
+  # CloudWatch Application Signals: never inject auto-instrumentation into arc-intel (Python; the
+  # injected init container also violates the namespace's restricted Pod Security standard).
+  - target: {kind: Deployment, name: arc-intel-mcp}
+    patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations
+        value:
+          instrumentation.opentelemetry.io/inject-java: "false"
+          instrumentation.opentelemetry.io/inject-python: "false"
+          instrumentation.opentelemetry.io/inject-nodejs: "false"
+          instrumentation.opentelemetry.io/inject-dotnet: "false"
+EOF
+tail -14 "$K"
+git add "$K" && git commit -m "arc-intel: opt out of CloudWatch auto-instrumentation" && git push
+argocd app get arc-intel --hard-refresh >/dev/null && argocd app sync arc-intel
+kubectl -n arc-intel rollout status deploy/arc-intel-mcp --timeout=120s
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value: {name: ARGOCD_INSECURE, value: "true"}
+  # CloudWatch Application Signals: never inject auto-instrumentation into arc-intel (Python; the
+  # injected init container also violates the namespace's restricted Pod Security standard).
+  - target: {kind: Deployment, name: arc-intel-mcp}
+    patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations
+        value:
+          instrumentation.opentelemetry.io/inject-java: "false"
+          instrumentation.opentelemetry.io/inject-python: "false"
+          instrumentation.opentelemetry.io/inject-nodejs: "false"
+          instrumentation.opentelemetry.io/inject-dotnet: "false"
+[main f7fc69d] arc-intel: opt out of CloudWatch auto-instrumentation
+ 1 file changed, 11 insertions(+)
+Enumerating objects: 13, done.
+Counting objects: 100% (13/13), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (7/7), done.
+Writing objects: 100% (7/7), 1019 bytes | 1019.00 KiB/s, done.
+Total 7 (delta 3), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (3/3), completed with 3 local objects.
+To https://github.com/ajaychinthapalli/arc-intel.git
+   fbe7656..f7fc69d  main -> main
+{"level":"fatal","msg":"rpc error: code = FailedPrecondition desc = another operation is already in progress","time":"2026-10-18T18:38:39-07:00"}
+Waiting for deployment "arc-intel-mcp" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment spec update to be observed...
+Waiting for deployment spec update to be observed...
+Waiting for deployment "arc-intel-mcp" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "arc-intel-mcp" rollout to finish: 0 of 1 updated replicas are available...
+Waiting for deployment spec update to be observed...
+Waiting for deployment spec update to be observed...
+Waiting for deployment "arc-intel-mcp" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "arc-intel-mcp" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "arc-intel-mcp" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "arc-intel-mcp" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "arc-intel-mcp" rollout to finish: 1 old replicas are pending termination...
+deployment "arc-intel-mcp" successfully rolled out
+bash-5.3$

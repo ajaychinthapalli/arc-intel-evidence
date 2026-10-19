@@ -1,0 +1,11 @@
+# Captured: Sun 2026-10-18 17:00 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 68. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ git status -sb | head -1
+## develop...origin/develop
+bash-5.3$ 
+bash-5.3$ git ls-tree -r --name-only origin/main | grep -E '^clusters/[REDACTED_CLUSTER_NAME]/|^deploy/mcp-server/' | head
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$

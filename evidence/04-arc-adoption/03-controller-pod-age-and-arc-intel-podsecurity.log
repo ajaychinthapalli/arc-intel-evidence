@@ -1,0 +1,43 @@
+# Captured: Sun 2026-10-18 18:27 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: attachment 4c3726ee-attachment.txt. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ kubectl -n arc-systems get pods -l app.kubernetes.io/name=gha-rs-controller
+NAME                                     READY   STATUS    RESTARTS   AGE
+arc-gha-rs-controller-66987b84cb-bjrlq   1/1     Running   0          5d20h
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$    argocd app get arc-runners-arc-runner-set --hard-refresh >/dev/null
+   argocd app diff arc-runners-arc-runner-set
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$    kubectl -n arc-intel get deploy,rs
+   kubectl -n arc-intel describe rs -l app.kubernetes.io/name=arc-intel-mcp | sed -n '/Events:/,$p' | tail -8
+   kubectl get validatingwebhookconfigurations,mutatingwebhookconfigurations -o name
+NAME                            READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/arc-intel-mcp   0/1     0            0           10m
+
+NAME                                       DESIRED   CURRENT   READY   AGE
+replicaset.apps/arc-intel-mcp-67f56d6d44   1         0         0       10m
+  Warning  FailedCreate  10m                 replicaset-controller  Error creating: pods "arc-intel-mcp-67f56d6d44-bnch7" is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "opentelemetry-auto-instrumentation-java" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "opentelemetry-auto-instrumentation-java" must set securityContext.capabilities.drop=["ALL"])
+  Warning  FailedCreate  10m                 replicaset-controller  Error creating: pods "arc-intel-mcp-67f56d6d44-52xjb" is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "opentelemetry-auto-instrumentation-java" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "opentelemetry-auto-instrumentation-java" must set securityContext.capabilities.drop=["ALL"])
+  Warning  FailedCreate  10m                 replicaset-controller  Error creating: pods "arc-intel-mcp-67f56d6d44-4fcvm" is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "opentelemetry-auto-instrumentation-java" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "opentelemetry-auto-instrumentation-java" must set securityContext.capabilities.drop=["ALL"])
+  Warning  FailedCreate  10m                 replicaset-controller  Error creating: pods "arc-intel-mcp-67f56d6d44-m7ddk" is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "opentelemetry-auto-instrumentation-java" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "opentelemetry-auto-instrumentation-java" must set securityContext.capabilities.drop=["ALL"])
+  Warning  FailedCreate  10m                 replicaset-controller  Error creating: pods "arc-intel-mcp-67f56d6d44-9rzlq" is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "opentelemetry-auto-instrumentation-java" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "opentelemetry-auto-instrumentation-java" must set securityContext.capabilities.drop=["ALL"])
+  Warning  FailedCreate  10m                 replicaset-controller  Error creating: pods "arc-intel-mcp-67f56d6d44-rvcqz" is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "opentelemetry-auto-instrumentation-java" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "opentelemetry-auto-instrumentation-java" must set securityContext.capabilities.drop=["ALL"])
+  Warning  FailedCreate  10m                 replicaset-controller  Error creating: pods "arc-intel-mcp-67f56d6d44-qdq57" is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "opentelemetry-auto-instrumentation-java" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "opentelemetry-auto-instrumentation-java" must set securityContext.capabilities.drop=["ALL"])
+  Warning  FailedCreate  5m4s (x8 over 10m)  replicaset-controller  (combined from similar events): Error creating: pods "arc-intel-mcp-67f56d6d44-bjtw5" is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "opentelemetry-auto-instrumentation-java" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "opentelemetry-auto-instrumentation-java" must set securityContext.capabilities.drop=["ALL"])
+validatingwebhookconfiguration.admissionregistration.k8s.io/amazon-cloudwatch-observability-validating-webhook-configuration
+validatingwebhookconfiguration.admissionregistration.k8s.io/aws-load-balancer-webhook
+validatingwebhookconfiguration.admissionregistration.k8s.io/externalsecret-validate
+validatingwebhookconfiguration.admissionregistration.k8s.io/kube-prometheus-stack-admission
+validatingwebhookconfiguration.admissionregistration.k8s.io/secretstore-validate
+validatingwebhookconfiguration.admissionregistration.k8s.io/vpc-resource-validating-webhook
+mutatingwebhookconfiguration.admissionregistration.k8s.io/amazon-cloudwatch-observability-mutating-webhook-configuration
+mutatingwebhookconfiguration.admissionregistration.k8s.io/aws-load-balancer-webhook
+mutatingwebhookconfiguration.admissionregistration.k8s.io/kube-prometheus-stack-admission
+mutatingwebhookconfiguration.admissionregistration.k8s.io/pod-identity-webhook
+mutatingwebhookconfiguration.admissionregistration.k8s.io/vpc-resource-mutating-webhook
+bash-5.3$

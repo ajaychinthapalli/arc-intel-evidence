@@ -1,0 +1,8 @@
+# Captured: Sun 2026-10-18 18:15 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 80. Raw terminal output, unedited except: public IP masked.
+
+ash-5.3$ kubectl -n argocd port-forward svc/argocd-server 8080:443 >/dev/null 2>&1 &
+argocd login localhost:8080 --username admin --insecure
+[1] 7412
+Password:

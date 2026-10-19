@@ -1,0 +1,95 @@
+# Captured: Sun 2026-10-18 18:31 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 92. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ CUR=$(aws eks describe-addon --cluster-name [REDACTED_CLUSTER_NAME] --addon-name amazon-cloudwatch-observability \
+  --query addon.configurationValues --output text)
+echo "$CUR"
+{
+  "manager": {
+    "applicationSignals": {
+      "autoMonitor": {
+        "monitorAllServices": true,
+        "exclude": {
+          "python": { "namespaces": ["kagent", "agentgateway-system", "agentregistry"] },
+          "java":   { "namespaces": ["kagent", "agentgateway-system", "agentregistry"] },
+          "nodejs": { "namespaces": ["kagent", "agentgateway-system", "agentregistry"] },
+          "dotnet": { "namespaces": ["kagent", "agentgateway-system", "agentregistry"] }
+        }
+      }
+    }
+  }
+}
+bash-5.3$ 
+bash-5.3$ [ "$CUR" = "None" ] && CUR='{}'
+NEW=$(jq -c '
+  reduce ("java","python","nodejs","dotnet") as $l (.;
+    .manager.applicationSignals.autoMonitor.exclude[$l].namespaces =
+      ((.manager.applicationSignals.autoMonitor.exclude[$l].namespaces // []) + ["arc-intel"] | unique))' <<<"$CUR")
+echo "$NEW" | jq .        # review: everything you had, plus the arc-intel exclusions
+aws eks update-addon --cluster-name [REDACTED_CLUSTER_NAME] --addon-name amazon-cloudwatch-observability \
+  --configuration-values "$NEW" --resolve-conflicts PRESERVE
+aws eks wait addon-active --cluster-name [REDACTED_CLUSTER_NAME] --addon-name amazon-cloudwatch-observability
+{
+  "manager": {
+    "applicationSignals": {
+      "autoMonitor": {
+        "monitorAllServices": true,
+        "exclude": {
+          "python": {
+            "namespaces": [
+              "agentgateway-system",
+              "agentregistry",
+              "arc-intel",
+              "kagent"
+            ]
+          },
+          "java": {
+            "namespaces": [
+              "agentgateway-system",
+              "agentregistry",
+              "arc-intel",
+              "kagent"
+            ]
+          },
+          "nodejs": {
+            "namespaces": [
+              "agentgateway-system",
+              "agentregistry",
+              "arc-intel",
+              "kagent"
+            ]
+          },
+          "dotnet": {
+            "namespaces": [
+              "agentgateway-system",
+              "agentregistry",
+              "arc-intel",
+              "kagent"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+{
+    "update": {
+        "id": "2395b293-288e-3aea-b374-d522b653b6f6",
+        "status": "InProgress",
+        "type": "AddonUpdate",
+        "params": [
+            {
+                "type": "ResolveConflicts",
+                "value": "PRESERVE"
+            },
+            {
+                "type": "ConfigurationValues",
+                "value": "{\"manager\":{\"applicationSignals\":{\"autoMonitor\":{\"monitorAllServices\":true,\"exclude\":{\"python\":{\"namespaces\":[\"agentgateway-system\",\"agentregistry\",\"arc-intel\",\"kagent\"]},\"java\":{\"namespaces\":[\"agentgateway-system\",\"agentregistry\",\"arc-intel\",\"kagent\"]},\"nodejs\":{\"namespaces\":[\"agentgateway-system\",\"agentregistry\",\"arc-intel\",\"kagent\"]},\"dotnet\":{\"namespaces\":[\"agentgateway-system\",\"agentregistry\",\"arc-intel\",\"kagent\"]}}}}}}"
+            }
+        ],
+        "createdAt": "2026-10-18T18:29:49.371000-07:00",
+        "errors": []
+    }
+}
+bash-5.3$

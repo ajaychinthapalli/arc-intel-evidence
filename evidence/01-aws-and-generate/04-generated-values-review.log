@@ -1,0 +1,47 @@
+# Captured: Sun 2026-10-18 16:44 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 52. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ cat clusters/[REDACTED_CLUSTER_NAME]/ADOPTION-NOTES.md
+# Adoption notes for [REDACTED_CLUSTER_NAME]
+
+- ARC chart version: 0.14.2 (controller release `arc` in `arc-systems`)
+- Scale sets adopted: arc-runner-set (namespace `arc-runners`)
+- GitHub config Secret: `arc-github-app` (kept; External Secrets merges [REDACTED_SECRET_NAME] into it)
+- Agent: ModelConfig `bedrock-native`, ServiceAccount `arc-readiness-agent`
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ cat clusters/[REDACTED_CLUSTER_NAME]/runner-scale-sets/arc-runner-set/values.yaml
+# Values of Helm release 'arc-runner-set' exported from the cluster (helm get values).
+# Change runner pools through PRs to this file; Argo CD applies them.
+githubConfigSecret: arc-github-app
+githubConfigUrl: https://github.com/ajaychinthapalli/arc-runners-sandbox
+maxRunners: 3
+minRunners: 0
+template:
+  metadata:
+    annotations:
+      karpenter.sh/do-not-disrupt: "true"
+  spec:
+    containers:
+      - command:
+          - /home/runner/run.sh
+        image: ghcr.io/actions/actions-runner:latest
+        name: runner
+        resources:
+          limits:
+            memory: 2Gi
+          requests:
+            cpu: 500m
+            memory: 1Gi
+    nodeSelector:
+      capacity: ondemand
+      workload: ci-runner
+    terminationGracePeriodSeconds: 60
+    tolerations:
+      - effect: NoSchedule
+        key: workload
+        value: ci-runner
+bash-5.3$ grep -rniE 'BEGIN (RSA )?PRIVATE KEY|ghp_|github_pat_' clusters/[REDACTED_CLUSTER_NAME]
+bash-5.3$

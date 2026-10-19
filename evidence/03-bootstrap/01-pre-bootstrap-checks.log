@@ -1,0 +1,8 @@
+# Captured: Sun 2026-10-18 17:02 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 72. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ grep -n "extract" clusters/[REDACTED_CLUSTER_NAME]/manifests/platform-secrets/secrets.yaml   # expect arc/[REDACTED_CLUSTER_NAME]/github-app
+grep -n "targetRevision" clusters/[REDACTED_CLUSTER_NAME]/root-app.yaml                      # expect main
+25:    - extract: {key: arc/[REDACTED_CLUSTER_NAME]/github-app}
+12:    targetRevision: main
