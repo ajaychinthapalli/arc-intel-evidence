@@ -1,0 +1,35 @@
+# Captured: Sun 2026-10-18 18:55 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 110. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ jq -n --arg id "5374908" --arg inst "172872993" --rawfile key [REDACTED_PRIVATE_KEY_PATH] \
+  '{github_app_id:$id, github_app_installation_id:$inst, github_app_private_key:$key}' \
+| aws secretsmanager put-secret-value --secret-id arc/[REDACTED_CLUSTER_NAME]/github-app --secret-string file:///dev/stdin
+test_app arc/[REDACTED_CLUSTER_NAME]/github-app
+{
+    "ARN": "[REDACTED_AWS_ARN]",
+    "Name": "arc/[REDACTED_CLUSTER_NAME]/github-app",
+    "VersionId": "7a367364-cee4-4987-a6e9-85e5fd3a10cc",
+    "VersionStages": [
+        "AWSCURRENT"
+    ]
+}
+== arc/[REDACTED_CLUSTER_NAME]/github-app (app [REDACTED_GITHUB_APP_ID], configured installation [REDACTED_GITHUB_INSTALLATION_ID])
+   app: [REDACTED_GITHUB_APP_NAME]
+   installation [REDACTED_GITHUB_INSTALLATION_ID] on ajaychinthapalli (all)
+bash-5.3$ kubectl -n arc-runners annotate externalsecret arc-github-app force-sync="$(date +%s)" --overwrite
+sleep 10
+kubectl -n arc-systems delete pod -l app.kubernetes.io/component=runner-scale-set-listener
+sleep 30
+kubectl -n arc-systems get pods -l app.kubernetes.io/component=runner-scale-set-listener
+kubectl -n arc-systems logs -l app.kubernetes.io/component=runner-scale-set-listener --tail=5
+externalsecret.external-secrets.io/arc-github-app annotated
+pod "arc-runner-set-694df84f-listener" deleted from arc-systems namespace
+NAME                               READY   STATUS    RESTARTS   AGE
+arc-runner-set-694df84f-listener   1/1     Running   0          31s
+time=2026-10-19T01:54:20.312Z level=INFO source=github.com/actions/actions-runner-controller/cmd/ghalistener/scaler/scaler.go:197 msg=Compare component=worker original="{\"metadata\":{},\"spec\":{\"replicas\":-1,\"patchID\":-1,\"ephemeralRunnerSpec\":{\"metadata\":{},\"spec\":{\"containers\":null}}},\"status\":{\"currentReplicas\":0,\"pendingEphemeralRunners\":0,\"runningEphemeralRunners\":0,\"failedEphemeralRunners\":0,\"phase\":\"\"}}" patch="{\"metadata\":{},\"spec\":{\"patchID\":0,\"ephemeralRunnerSpec\":{\"metadata\":{},\"spec\":{\"containers\":null}}},\"status\":{\"currentReplicas\":0,\"pendingEphemeralRunners\":0,\"runningEphemeralRunners\":0,\"failedEphemeralRunners\":0,\"phase\":\"\"}}"
+time=2026-10-19T01:54:20.312Z level=INFO source=github.com/actions/actions-runner-controller/cmd/ghalistener/scaler/scaler.go:203 msg="Preparing EphemeralRunnerSet update" component=worker json="{\"spec\":{\"patchID\":0,\"replicas\":null}}"
+time=2026-10-19T01:54:20.344Z level=INFO source=github.com/actions/actions-runner-controller/cmd/ghalistener/scaler/scaler.go:219 msg="Ephemeral runner set scaled." component=worker namespace=arc-runners name=arc-runner-set-fkvcg replicas=0
+time=2026-10-19T01:54:20.344Z level=INFO source=github.com/actions/scaleset@v0.4.0/listener/listener.go:179 msg="Getting next message" component=listener lastMessageID=0
+time=2026-10-19T01:54:20.344Z level=DEBUG source=github.com/hashicorp/go-retryablehttp@v0.7.8/client.go:678 msg="performing request" method=GET url=https://broker.actions.githubusercontent.com/scalesets/message
+bash-5.3$

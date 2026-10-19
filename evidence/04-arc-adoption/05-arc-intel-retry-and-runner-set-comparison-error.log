@@ -1,0 +1,40 @@
+# Captured: Sun 2026-10-18 18:35 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 94. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ # arc-intel: create a fresh ReplicaSet, which the webhook now leaves alone
+kubectl -n arc-intel delete rs -l app.kubernetes.io/name=arc-intel-mcp
+kubectl -n arc-intel rollout status deploy/arc-intel-mcp --timeout=120s
+kubectl -n arc-intel get pod -l app.kubernetes.io/name=arc-intel-mcp \
+  -o jsonpath='{range .items[*].spec.initContainers[*]}{.name}{"\n"}{end}'   # expect no output
+kubectl -n arc-intel logs deploy/arc-intel-mcp --tail=15
+
+# runner set: confirm the controllerServiceAccount fix reached Argo CD
+git log origin/main --oneline -1
+argocd app get arc-runners-arc-runner-set | sed -n '1,20p'
+replicaset.apps "arc-intel-mcp-67f56d6d44" deleted from arc-intel namespace
+Waiting for deployment "arc-intel-mcp" rollout to finish: 0 out of 1 new replicas have been updated...
+error: timed out waiting for the condition
+error: timed out waiting for the condition
+4e79346 (HEAD -> main, origin/main, origin/HEAD) kube-prometheus-stack: skip control-plane scrapers on EKS (no kube-system writes)
+Name:               argocd/arc-runners-arc-runner-set
+Project:            arc-runners
+Server:             https://kubernetes.default.svc
+Namespace:          arc-runners
+URL:                https://argocd.example.com/applications/arc-runners-arc-runner-set
+Sources:
+- Repo:             ghcr.io/actions/actions-runner-controller-charts
+  Target:           0.14.2
+  Helm Values:      $values/clusters/[REDACTED_CLUSTER_NAME]/runner-scale-sets/arc-runner-set/values.yaml
+- Repo:             https://github.com/ajaychinthapalli/arc-intel.git
+  Target:           main
+  Ref:              values
+SyncWindow:         Sync Allowed
+Sync Policy:        Manual
+Sync Status:        Unknown
+Health Status:      Healthy
+
+CONDITION        MESSAGE  LAST TRANSITION
+ComparisonError  Failed to load target state: failed to generate manifest for source 1 of 2: rpc error: code = Unknown desc = Manifest generation error (cached): failed to execute helm template command: failed running helm: `helm template . --name-template arc-runner-set --namespace arc-runners --kube-version 1.36.4 --values <path to cached source>/clusters/[REDACTED_CLUSTER_NAME]/runner-scale-sets/arc-runner-set/values.yaml <api versions removed> --include-crds` failed exit status 1: Error: execution error at (gha-runner-scale-set/templates/manager_role_binding.yaml:42:11): No gha-rs-controller deployment found using label (app.kubernetes.io/part-of=gha-rs-controller). Consider setting controllerServiceAccount.name in values.yaml to be explicit if you think the discovery is wrong.
+
+bash-5.3$

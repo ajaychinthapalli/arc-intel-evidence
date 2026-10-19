@@ -1,0 +1,45 @@
+# Captured: Sun 2026-10-18 16:29 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 42. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ $S discover
+
+==> Cluster [REDACTED_CLUSTER_NAME] (us-east-2)
+{
+    "version": "1.36",
+    "audit": [
+        "api",
+        "audit",
+        "authenticator"
+    ]
+}
+
+==> ARC Helm releases (will be adopted by Argo CD, not reinstalled)
+{
+  "release": "arc",
+  "namespace": "arc-systems",
+  "chart": "gha-runner-scale-set-controller-0.14.2"
+}
+{
+  "release": "arc-runner-set",
+  "namespace": "arc-runners",
+  "chart": "gha-runner-scale-set-0.14.2"
+}
+
+==> Scale sets
+NS            NAME             GITHUB                                                    SECRET           MIN   MAX
+arc-runners   arc-runner-set   https://github.com/ajaychinthapalli/arc-runners-sandbox   arc-github-app   0     3
+
+==> GitHub config Secret key names (values not shown)
+github_app_id
+github_app_installation_id
+github_app_private_key
+
+==> Agent Bedrock access will be copied from arc-upgrade-readiness: ServiceAccount arc-readiness-agent false
+
+==> Argo CD installed?
+no (phase argocd installs it)
+
+==> VPC CNI NetworkPolicy enforcement
+enabled
+bash-5.3$

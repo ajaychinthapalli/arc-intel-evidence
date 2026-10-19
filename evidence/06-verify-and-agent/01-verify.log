@@ -1,0 +1,43 @@
+# Captured: Sun 2026-10-18 18:56 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 112. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ $S verify
+
+==> Argo CD applications
+APP                          SYNC     HEALTH
+[REDACTED_CLUSTER_NAME]-root          Synced   Healthy
+arc-compliance-agent         Synced   Healthy
+arc-controller               Synced   Healthy
+arc-intel                    Synced   Healthy
+arc-intel-digest             Synced   Healthy
+arc-intel-monitoring         Synced   Healthy
+arc-runners-arc-runner-set   Synced   Healthy
+external-secrets             Synced   Healthy
+kube-prometheus-stack        Synced   Healthy
+platform-secrets             Synced   Healthy
+
+==> arc-intel
+deployment "arc-intel-mcp" successfully rolled out
+{
+  "fleet_grade": "B",
+  "fleet_score": 78,
+  "postures": {
+    "non_compliant": 1
+  }
+}
+{
+  "name": "arc-runner-set",
+  "baseline_source": "argocd:arc-runners-arc-runner-set",
+  "drifted": false,
+  "identity_source": "eks_audit_log",
+  "gitops": {
+    "application": "arc-runners-arc-runner-set",
+    "sync_status": "Synced",
+    "self_heal": false
+  }
+}
+
+Expect baseline_source "argocd:arc-runners-<release>" and identity_source "eks_audit_log".
+Then: kagent invoke -n kagent --agent arc-compliance-agent --task "How compliant are our ARC runners?"
+bash-5.3$

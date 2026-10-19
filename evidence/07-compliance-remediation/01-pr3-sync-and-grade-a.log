@@ -1,0 +1,188 @@
+# Captured: Sun 2026-10-18 19:14 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: attachment 7f4b8b25-attachment.txt. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ VER=$(gh api repos/actions/runner/releases/latest --jq .tag_name | sed 's/^v//'); echo "runner $VER"
+git switch -c fix/arc-runner-set-compliance
+cat > clusters/[REDACTED_CLUSTER_NAME]/runner-scale-sets/arc-runner-set/values.yaml <<EOF
+# Values of Helm release 'arc-runner-set', managed by Argo CD.
+# Change runner pools through PRs to this file; Argo CD applies them.
+githubConfigSecret: arc-github-app
+githubConfigUrl: https://github.com/ajaychinthapalli/arc-runners-sandbox
+maxRunners: 3
+minRunners: 0
+# ARC-013: ownership labels for chargeback and incident routing
+labels:
+  owner: ajaychinthapalli
+  cost-center: sandbox
+template:
+  metadata:
+    annotations:
+      karpenter.sh/do-not-disrupt: "true"
+  spec:
+    containers:
+      - name: runner
+        image: ghcr.io/actions/actions-runner:${VER}   # ARC-005: pinned (add @sha256:<digest> for immutability)
+        command:
+          - /home/runner/run.sh
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "1"          # ARC-010
+            memory: 2Gi
+        securityContext:
+          allowPrivilegeEscalation: false   # ARC-011
+    nodeSelector:
+      capacity: ondemand
+      workload: ci-runner
+    terminationGracePeriodSeconds: 60
+    tolerations:
+      - effect: NoSchedule
+        key: workload
+        value: ci-runner
+# Explicit because Argo CD renders without cluster access (the chart's controller lookup returns nothing).
+controllerServiceAccount:
+  namespace: arc-systems
+  name: arc-gha-rs-controller
+EOF
+git diff --stat
+git add -A && git commit -m "arc-runner-set: pin runner image, CPU limit, no privilege escalation, ownership labels"
+git push -u origin fix/arc-runner-set-compliance
+gh pr create --base main --title "arc-runner-set: fix ARC-005/010/011/013" \
+  --body "Pins the runner image to ${VER}, adds a CPU limit, sets allowPrivilegeEscalation=false and adds owner/cost-center labels. Expected result: arc-intel score 78 -> 100."
+runner 2.338.0
+Switched to a new branch 'fix/arc-runner-set-compliance'
+ clusters/[REDACTED_CLUSTER_NAME]/runner-scale-sets/arc-runner-set/values.yaml | 19 +++++++++++++------
+ 1 file changed, 13 insertions(+), 6 deletions(-)
+[fix/arc-runner-set-compliance 8a3c206] arc-runner-set: pin runner image, CPU limit, no privilege escalation, ownership labels
+ 1 file changed, 13 insertions(+), 6 deletions(-)
+Enumerating objects: 13, done.
+Counting objects: 100% (13/13), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (5/5), done.
+Writing objects: 100% (7/7), 957 bytes | 957.00 KiB/s, done.
+Total 7 (delta 3), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (3/3), completed with 3 local objects.
+remote: 
+remote: Create a pull request for 'fix/arc-runner-set-compliance' on GitHub by visiting:
+remote:      https://github.com/ajaychinthapalli/arc-intel/pull/new/fix/arc-runner-set-compliance
+remote: 
+To https://github.com/ajaychinthapalli/arc-intel.git
+ * [new branch]      fix/arc-runner-set-compliance -> fix/arc-runner-set-compliance
+branch 'fix/arc-runner-set-compliance' set up to track 'origin/fix/arc-runner-set-compliance'.
+
+Creating pull request for fix/arc-runner-set-compliance into main in ajaychinthapalli/arc-intel
+
+https://github.com/ajaychinthapalli/arc-intel/pull/3
+bash-5.3$ gh pr merge --merge --delete-branch && git switch main && git pull
+argocd app get arc-runners-arc-runner-set --hard-refresh >/dev/null
+argocd app diff arc-runners-arc-runner-set
+argocd app sync arc-runners-arc-runner-set
+sleep 300; ask "What is our fleet grade now?"
+! Pull request ajaychinthapalli/arc-intel#3 (arc-runner-set: fix ARC-005/010/011/013) has diverged from local branch
+! Pull request ajaychinthapalli/arc-intel#3 was already merged
+From https://github.com/ajaychinthapalli/arc-intel
+ * branch            main       -> FETCH_HEAD
+Updating f7fc69d..2207959
+Fast-forward
+ clusters/[REDACTED_CLUSTER_NAME]/runner-scale-sets/arc-runner-set/values.yaml | 19 +++++++++++++------
+ 1 file changed, 13 insertions(+), 6 deletions(-)
+✓ Deleted local branch fix/arc-runner-set-compliance and switched to branch main
+✓ Deleted remote branch fix/arc-runner-set-compliance
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+Already up to date.
+
+===== /ServiceAccount arc-runners/arc-runner-set-gha-rs-no-permission ======
+17a18
+>     cost-center: sandbox
+18a20
+>     owner: ajaychinthapalli
+
+===== actions.github.com/AutoscalingRunnerSet arc-runners/arc-runner-set ======
+11c11
+<     actions.github.com/values-hash: aa57063feecf5b1fd3173ecb329b53c73d0fe53d94f1f4791fe8b47391df2e7
+---
+>     actions.github.com/values-hash: 96226e2928c58fa5479629cb5f5fd7af850d8f6bd6eef077d4c016ec9043190
+29a30
+>     cost-center: sandbox
+30a32
+>     owner: ajaychinthapalli
+179c181
+<         image: ghcr.io/actions/actions-runner:latest
+---
+>         image: ghcr.io/actions/actions-runner:2.338.0
+182a185
+>             cpu: "1"
+186a190,191
+>         securityContext:
+>           allowPrivilegeEscalation: false
+
+===== rbac.authorization.k8s.io/Role arc-runners/arc-runner-set-gha-rs-manager ======
+18a19
+>     cost-center: sandbox
+19a21
+>     owner: ajaychinthapalli
+
+===== rbac.authorization.k8s.io/RoleBinding arc-runners/arc-runner-set-gha-rs-manager ======
+18a19
+>     cost-center: sandbox
+19a21
+>     owner: ajaychinthapalli
+
+Name:               argocd/arc-runners-arc-runner-set
+Project:            arc-runners
+Server:             https://kubernetes.default.svc
+Namespace:          arc-runners
+URL:                https://argocd.example.com/applications/arc-runners-arc-runner-set
+Sources:
+- Repo:             ghcr.io/actions/actions-runner-controller-charts
+  Target:           0.14.2
+  Helm Values:      $values/clusters/[REDACTED_CLUSTER_NAME]/runner-scale-sets/arc-runner-set/values.yaml
+- Repo:             https://github.com/ajaychinthapalli/arc-intel.git
+  Target:           main
+  Ref:              values
+SyncWindow:         Sync Allowed
+Sync Policy:        Manual
+Sync Status:        Synced to 0.14.2
+Health Status:      Healthy
+
+Operation:          Sync
+Sync Revision:      0.14.2, 2207959bafafaa54a58486b6cfcdb7d1b486bbcf
+Phase:              Succeeded
+Start:              2026-10-18 19:08:32 -0700 MST
+Finished:           2026-10-18 19:08:32 -0700 MST
+Duration:           0s
+Message:            successfully synced (all tasks run)
+
+GROUP                      KIND                  NAMESPACE    NAME                                 STATUS  HEALTH  HOOK  MESSAGE
+                           ServiceAccount        arc-runners  arc-runner-set-gha-rs-no-permission  Synced                serviceaccount/arc-runner-set-gha-rs-no-permission serverside-applied
+rbac.authorization.k8s.io  Role                  arc-runners  arc-runner-set-gha-rs-manager        Synced                role.rbac.authorization.k8s.io/arc-runner-set-gha-rs-manager serverside-applied
+rbac.authorization.k8s.io  RoleBinding           arc-runners  arc-runner-set-gha-rs-manager        Synced                rolebinding.rbac.authorization.k8s.io/arc-runner-set-gha-rs-manager serverside-applied
+actions.github.com         AutoscalingRunnerSet  arc-runners  arc-runner-set                       Synced                autoscalingrunnerset.actions.github.com/arc-runner-set serverside-applied
+**Fleet Grade: A (Score: 100/100)** ✅
+
+Your ARC fleet is in excellent shape. Here's the snapshot:
+
+| Dimension | Value |
+|---|---|
+| Fleet Score | 100 / 100 |
+| Fleet Grade | **A** |
+| Scale Sets | 1 |
+| Posture | ✅ Healthy |
+| Critical / High Findings | 0 |
+| Drift Fields | 0 |
+| Manual Changes | 0 |
+
+**Controller**
+- `arc-systems/arc-gha-rs-controller` — v0.14.2, Ready 1/1 ✅
+
+**Scale Sets**
+| Ref | Grade | Posture | Score |
+|---|---|---|---|
+| `arc-runners/arc-runner-set` | A | healthy | 100 |
+
+**No top risks, no drift, no compliance violations.** Nothing actionable at this time. Your single scale set is fully compliant and matches its source of truth.
+bash-5.3$

@@ -1,0 +1,96 @@
+# Captured: Sun 2026-10-18 15:19 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: attachment 2e434341-attachment.txt. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ aws eks list-clusters
+{
+    "clusters": [
+        "[REDACTED_CLUSTER_NAME]"
+    ]
+}
+bash-5.3$ 
+bash-5.3$ CLUSTER_NAME=[REDACTED_CLUSTER_NAME]
+bash-5.3$ helm list -A
+NAME                        	NAMESPACE  	REVISION	UPDATED                             	STATUS  	CHART                                 	APP VERSION
+arc                         	arc-systems	1       	2026-10-12 21:45:43.569979 -0700 MST	deployed	gha-runner-scale-set-controller-0.14.2	0.14.2     
+arc-runner-set              	arc-runners	2       	2026-10-16 13:22:50.942679 -0700 MST	deployed	gha-runner-scale-set-0.14.2           	0.14.2     
+aws-load-balancer-controller	kube-system	1       	2026-10-04 14:41:36.908029 -0700 MST	deployed	aws-load-balancer-controller-3.5.0    	v3.5.0     
+kagent                      	kagent     	2       	2026-10-12 22:03:54.294936 -0700 MST	deployed	kagent-0.10.3                         	           
+kagent-crds                 	kagent     	1       	2026-10-12 22:00:55.297123 -0700 MST	deployed	kagent-crds-0.10.3                    	           
+karpenter                   	kube-system	1       	2026-10-16 13:12:36.632558 -0700 MST	deployed	karpenter-1.14.1                      	1.14.1     
+radar                       	radar      	1       	2026-09-30 00:31:28.497334 -0700 MST	deployed	radar-1.15.0                          	1.15.0     
+bash-5.3$ 
+bash-5.3$ kubectl get autoscalingrunnersets -A \
+  -o custom-columns='NS:.metadata.namespace,NAME:.metadata.name,MIN:.spec.minRunners,MAX:.spec.maxRunners,VERSION:.metadata.labels.app\.kubernetes\.io/version,HELM:.metadata.annotations.meta\.helm\.sh/release-name'
+NS            NAME             MIN   MAX   VERSION   HELM
+arc-runners   arc-runner-set   0     3     0.14.2    arc-runner-set
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ kubectl -n arc-systems get deploy -o wide
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                                                   SELECTOR
+arc-gha-rs-controller   1/1     1            1           5d17h   manager      ghcr.io/actions/gha-runner-scale-set-controller:0.14.2   app.kubernetes.io/instance=arc,app.kubernetes.io/name=gha-rs-controller,app.kubernetes.io/namespace=arc-systems
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ kubectl -n kagent get modelconfigs,agents,remotemcpservers
+NAME                                          PROVIDER   MODEL
+modelconfig.kagent.dev/bedrock-native         Bedrock    us.anthropic.claude-sonnet-4-6
+modelconfig.kagent.dev/default-model-config   OpenAI     gpt-4.1-mini
+
+NAME                                     TYPE          RUNTIME   READY   ACCEPTED
+agent.kagent.dev/arc-upgrade-readiness   Declarative   go        True    True
+
+NAME                                            PROTOCOL          URL                                       ACCEPTED
+remotemcpserver.kagent.dev/arc-k8s-readonly     STREAMABLE_HTTP   http://arc-k8s-readonly.kagent:8084/mcp   True
+remotemcpserver.kagent.dev/arc-release-info     STREAMABLE_HTTP   http://arc-release-info.kagent:8080/mcp   True
+remotemcpserver.kagent.dev/kagent-tool-server   STREAMABLE_HTTP   http://kagent-tools.kagent:8084/mcp       True
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ aws eks describe-cluster --name $CLUSTER_NAME \
+  --query 'cluster.{version:version,logging:logging.clusterLogging,oidc:identity.oidc.issuer,auth:accessConfig.authenticationMode}'
+{
+    "version": "1.36",
+    "logging": [
+        {
+            "types": [
+                "api",
+                "audit",
+                "authenticator"
+            ],
+            "enabled": true
+        },
+        {
+            "types": [
+                "controllerManager",
+                "scheduler"
+            ],
+            "enabled": false
+        }
+    ],
+    "oidc": "https://oidc.eks.us-east-2.amazonaws.com/id/F022F272CC5909CFA7B7805F89B4AD4B",
+    "auth": "API_AND_CONFIG_MAP"
+}
+bash-5.3$ 
+bash-5.3$ aws eks list-addons --cluster-name $CLUSTER_NAME
+{
+    "addons": [
+        "amazon-cloudwatch-observability",
+        "aws-ebs-csi-driver",
+        "coredns",
+        "eks-pod-identity-agent",
+        "kube-proxy",
+        "vpc-cni"
+    ]
+}
+bash-5.3$ 
+bash-5.3$ kubectl get nodes -L eks.amazonaws.com/nodegroup,kubernetes.io/arch
+NAME                                            STATUS   ROLES    AGE   VERSION               NODEGROUP   ARCH
+[REDACTED_INTERNAL_HOSTNAME]    Ready    <none>   28d   v1.36.4-eks-a887778               amd64
+[REDACTED_INTERNAL_HOSTNAME]   Ready    <none>   14d   v1.36.4-eks-3b4a6ca   agents      amd64
+[REDACTED_INTERNAL_HOSTNAME]   Ready    <none>   28d   v1.36.4-eks-a887778               amd64
+[REDACTED_INTERNAL_HOSTNAME]    Ready    <none>   28d   v1.36.4-eks-a887778               amd64
+[REDACTED_INTERNAL_HOSTNAME]    Ready    <none>   14d   v1.36.4-eks-3b4a6ca   agents      amd64
+bash-5.3$ 
+bash-5.3$ kubectl get crd | grep -E 'argoproj|external-secrets|monitoring.coreos' || echo "none"
+none
+bash-5.3$ 
+bash-5.3$

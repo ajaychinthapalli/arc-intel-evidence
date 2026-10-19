@@ -1,0 +1,13 @@
+# Captured: Sun 2026-10-18 16:33 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 44. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ kubectl -n kagent get sa arc-readiness-agent -o jsonpath='{.metadata.annotations}'; echo
+kubectl -n kagent get modelconfig bedrock-native -o jsonpath='{.spec.apiKeySecret}'; echo
+kubectl -n kagent get deploy arc-upgrade-readiness \
+  -o jsonpath='{.spec.template.spec.nodeSelector}{"\n"}{.spec.template.spec.tolerations}'; echo
+{"eks.amazonaws.com/role-arn":"[REDACTED_AWS_ARN]"}
+
+
+
+bash-5.3$

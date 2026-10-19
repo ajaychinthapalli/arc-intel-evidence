@@ -1,0 +1,274 @@
+# Captured: Sun 2026-10-18 17:01 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: attachment e4d4cd3a-attachment.txt. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ git status -sb | head -1
+## develop...origin/develop
+bash-5.3$ 
+bash-5.3$ git ls-tree -r --name-only origin/main | grep -E '^clusters/[REDACTED_CLUSTER_NAME]/|^deploy/mcp-server/' | head
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ git ls-tree -r --name-only origin/develop | grep -E '^clusters/[REDACTED_CLUSTER_NAME]/|^deploy/mcp-server/' | head
+clusters/[REDACTED_CLUSTER_NAME]/ADOPTION-NOTES.md
+clusters/[REDACTED_CLUSTER_NAME]/apps/00-projects-and-repos.yaml
+clusters/[REDACTED_CLUSTER_NAME]/apps/10-secrets.yaml
+clusters/[REDACTED_CLUSTER_NAME]/apps/20-arc.yaml
+clusters/[REDACTED_CLUSTER_NAME]/apps/30-monitoring.yaml
+clusters/[REDACTED_CLUSTER_NAME]/apps/40-arc-intel-and-agent.yaml
+clusters/[REDACTED_CLUSTER_NAME]/manifests/agent/kustomization.yaml
+clusters/[REDACTED_CLUSTER_NAME]/manifests/arc-intel/argocd-token.yaml
+clusters/[REDACTED_CLUSTER_NAME]/manifests/arc-intel/kustomization.yaml
+clusters/[REDACTED_CLUSTER_NAME]/manifests/arc-intel/policy.yaml
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ gh pr create --base main --head develop \
+  --title "arc-intel platform + adopt [REDACTED_CLUSTER_NAME] into Argo CD" \
+  --body "Adds arc-intel, the agent, monitoring and the Argo CD apps; adopts the existing ARC Helm releases (arc, arc-runner-set) with unchanged values."
+gh pr merge --merge        # or review and merge in the GitHub UI
+git fetch origin
+git ls-tree -r --name-only origin/main | grep -E '^clusters/[REDACTED_CLUSTER_NAME]/' | head -3
+
+Creating pull request for develop into main in ajaychinthapalli/arc-intel
+
+pull request create failed: GraphQL: No commits between main and develop (createPullRequest)
+? Pull request ajaychinthapalli/arc-intel#2 was already merged. Delete the branch locally? Yes
+remote: Enumerating objects: 2, done.
+remote: Counting objects: 100% (2/2), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 2 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+Unpacking objects: 100% (2/2), 1.80 KiB | 460.00 KiB/s, done.
+From https://github.com/ajaychinthapalli/arc-intel
+ * branch            main       -> FETCH_HEAD
+   0f35f14..1c7bb52  main       -> origin/main
+Updating 0f35f14..1c7bb52
+Fast-forward
+ .gitignore                                                           |  21 ++++
+ CODEOWNERS                                                           |   2 +
+ CONTRIBUTING.mg                                                      |  37 ++++++
+ README.md                                                            | 207 ++++++++++++++++++++++++++++++++-
+ clusters/README.md                                                   |  64 ++++++++++
+ clusters/_template/apps/00-projects-and-repos.yaml                   |  52 +++++++++
+ clusters/_template/apps/10-secrets.yaml                              |  41 +++++++
+ clusters/_template/apps/20-arc.yaml                                  |  67 +++++++++++
+ clusters/_template/apps/30-monitoring.yaml                           |  42 +++++++
+ clusters/_template/apps/40-arc-intel-and-agent.yaml                  |  53 +++++++++
+ clusters/_template/manifests/agent/kustomization.yaml                |  24 ++++
+ clusters/_template/manifests/arc-intel/argocd-token.yaml             |  12 ++
+ clusters/_template/manifests/arc-intel/kustomization.yaml            |  32 +++++
+ clusters/_template/manifests/arc-intel/policy.yaml                   |  63 ++++++++++
+ clusters/_template/manifests/platform-secrets/secrets.yaml           |  38 ++++++
+ clusters/_template/root-app.yaml                                     |  18 +++
+ clusters/_template/values/kube-prometheus-stack.yaml                 |  15 +++
+ clusters/[REDACTED_CLUSTER_NAME]/ADOPTION-NOTES.md                            |   6 +
+ clusters/[REDACTED_CLUSTER_NAME]/apps/00-projects-and-repos.yaml              |  52 +++++++++
+ clusters/[REDACTED_CLUSTER_NAME]/apps/10-secrets.yaml                         |  41 +++++++
+ clusters/[REDACTED_CLUSTER_NAME]/apps/20-arc.yaml                             |  67 +++++++++++
+ clusters/[REDACTED_CLUSTER_NAME]/apps/30-monitoring.yaml                      |  42 +++++++
+ clusters/[REDACTED_CLUSTER_NAME]/apps/40-arc-intel-and-agent.yaml             |  53 +++++++++
+ clusters/[REDACTED_CLUSTER_NAME]/manifests/agent/kustomization.yaml           |  23 ++++
+ clusters/[REDACTED_CLUSTER_NAME]/manifests/arc-intel/argocd-token.yaml        |  12 ++
+ clusters/[REDACTED_CLUSTER_NAME]/manifests/arc-intel/kustomization.yaml       |  32 +++++
+ clusters/[REDACTED_CLUSTER_NAME]/manifests/arc-intel/policy.yaml              |  63 ++++++++++
+ clusters/[REDACTED_CLUSTER_NAME]/manifests/platform-secrets/secrets.yaml      |  38 ++++++
+ clusters/[REDACTED_CLUSTER_NAME]/root-app.yaml                                |  18 +++
+ clusters/[REDACTED_CLUSTER_NAME]/runner-scale-sets/arc-runner-set/values.yaml |  30 +++++
+ clusters/[REDACTED_CLUSTER_NAME]/values/arc-controller.yaml                   |   2 +
+ clusters/[REDACTED_CLUSTER_NAME]/values/kube-prometheus-stack.yaml            |  15 +++
+ clusters/render.py                                                   | 174 +++++++++++++++++++++++++++
+ demo/offline/cluster.yaml                                            | 542 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ demo/prompts.md                                                      |  34 ++++++
+ demo/scripts/adopt-existing-eks.sh                                   | 295 ++++++++++++++++++++++++++++++++++++++++++++++
+ demo/scripts/run-offline.sh                                          |  23 ++++
+ demo/scripts/setup-eks.sh                                            |  94 +++++++++++++++
+ demo/scripts/setup-existing-eks.sh                                   | 128 ++++++++++++++++++++
+ demo/scripts/setup-kind.sh                                           |  68 +++++++++++
+ demo/scripts/simulate-drift.sh                                       |  20 ++++
+ demo/values/eks-runner-placement.yaml                                |  12 ++
+ demo/values/legacy-build.yaml                                        |  20 ++++
+ demo/values/linux-standard.yaml                                      |  27 +++++
+ deploy/digest/cronjob.yaml                                           |  38 ++++++
+ deploy/digest/digest.py                                              |  58 +++++++++
+ deploy/digest/kustomization.yaml                                     |   8 ++
+ deploy/eks/cluster.yaml                                              | 109 +++++++++++++++++
+ deploy/eks/kagent/kustomization.yaml                                 |  25 ++++
+ deploy/eks/kagent/model-config-bedrock.yaml                          |  14 +++
+ deploy/eks/mcp-server/argocd-token.yaml                              |  19 +++
+ deploy/eks/mcp-server/kustomization.yaml                             |  26 +++++
+ deploy/eks/monitoring/kube-prometheus-stack-amp.yaml                 |  24 ++++
+ deploy/eks/runner-baseline/github-app-secret.yaml                    |  29 +++++
+ deploy/eks/runner-baseline/kustomization.yaml                        |   7 ++
+ deploy/eks/runner-baseline/network-policy.yaml                       |  17 +++
+ deploy/existing-eks/kagent/kustomization.yaml                        |  25 ++++
+ deploy/existing-eks/mcp-server/kustomization.yaml                    |  27 +++++
+ deploy/existing-eks/mcp-server/policy.yaml                           |  64 ++++++++++
+ deploy/kagent/agent.yaml                                             | 115 ++++++++++++++++++
+ deploy/kagent/kustomization.yaml                                     |   7 ++
+ deploy/kagent/model-config.yaml                                      |  15 +++
+ deploy/kagent/remote-mcp-server.yaml                                 |  10 ++
+ deploy/mcp-server/deployment.yaml                                    |  92 +++++++++++++++
+ deploy/mcp-server/kustomization.yaml                                 |  12 ++
+ deploy/mcp-server/namespace.yaml                                     |   6 +
+ deploy/mcp-server/policy.yaml                                        |  64 ++++++++++
+ deploy/mcp-server/rbac.yaml                                          |  73 ++++++++++++
+ deploy/monitoring/monitoring.yaml                                    |  53 +++++++++
+ docs/diagram/architecture.png                                        | Bin 0 -> 873495 bytes
+ gitops/apps/platform.yaml                                            | 196 +++++++++++++++++++++++++++++++
+ gitops/apps/runner-scale-sets.yaml                                   |  47 ++++++++
+ gitops/argocd/arc-intel-account.yaml                                 |  22 ++++
+ gitops/bootstrap/root-app.yaml                                       |  23 ++++
+ gitops/projects/projects.yaml                                        |  49 ++++++++
+ gitops/repos/oci-helm-repos.yaml                                     |  24 ++++
+ mcp-server/Dockerfile                                                |  14 +++
+ mcp-server/arc_intel/__init__.py                                     |   3 +
+ mcp-server/arc_intel/argocd.py                                       | 134 +++++++++++++++++++++
+ mcp-server/arc_intel/audit.py                                        | 134 +++++++++++++++++++++
+ mcp-server/arc_intel/cluster.py                                      | 290 +++++++++++++++++++++++++++++++++++++++++++++
+ mcp-server/arc_intel/drift.py                                        | 200 +++++++++++++++++++++++++++++++
+ mcp-server/arc_intel/engine.py                                       | 313 +++++++++++++++++++++++++++++++++++++++++++++++++
+ mcp-server/arc_intel/metrics.py                                      |  61 ++++++++++
+ mcp-server/arc_intel/policy.py                                       |  80 +++++++++++++
+ mcp-server/arc_intel/rules.py                                        | 350 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ mcp-server/arc_intel/server.py                                       | 186 +++++++++++++++++++++++++++++
+ mcp-server/pyproject.toml                                            |  28 +++++
+ mcp-server/tests/__init__.py                                         |   0
+ mcp-server/tests/fixtures.py                                         | 238 +++++++++++++++++++++++++++++++++++++
+ mcp-server/tests/test_argocd.py                                      | 116 ++++++++++++++++++
+ mcp-server/tests/test_audit.py                                       |  89 ++++++++++++++
+ mcp-server/tests/test_engine.py                                      | 199 +++++++++++++++++++++++++++++++
+ runner-scale-sets/_common/eks.yaml                                   |  24 ++++
+ runner-scale-sets/arm64-builds/values.yaml                           |  19 +++
+ runner-scale-sets/linux-large/values.yaml                            |   4 +
+ runner-scale-sets/linux-standard/values.yaml                         |   4 +
+ 97 files changed, 6502 insertions(+), 1 deletion(-)
+ create mode 100644 .gitignore
+ create mode 100644 CODEOWNERS
+ create mode 100644 CONTRIBUTING.mg
+ create mode 100644 clusters/README.md
+ create mode 100644 clusters/_template/apps/00-projects-and-repos.yaml
+ create mode 100644 clusters/_template/apps/10-secrets.yaml
+ create mode 100644 clusters/_template/apps/20-arc.yaml
+ create mode 100644 clusters/_template/apps/30-monitoring.yaml
+ create mode 100644 clusters/_template/apps/40-arc-intel-and-agent.yaml
+ create mode 100644 clusters/_template/manifests/agent/kustomization.yaml
+ create mode 100644 clusters/_template/manifests/arc-intel/argocd-token.yaml
+ create mode 100644 clusters/_template/manifests/arc-intel/kustomization.yaml
+ create mode 100644 clusters/_template/manifests/arc-intel/policy.yaml
+ create mode 100644 clusters/_template/manifests/platform-secrets/secrets.yaml
+ create mode 100644 clusters/_template/root-app.yaml
+ create mode 100644 clusters/_template/values/kube-prometheus-stack.yaml
+ create mode 100644 clusters/[REDACTED_CLUSTER_NAME]/ADOPTION-NOTES.md
+ create mode 100644 clusters/[REDACTED_CLUSTER_NAME]/apps/00-projects-and-repos.yaml
+ create mode 100644 clusters/[REDACTED_CLUSTER_NAME]/apps/10-secrets.yaml
+ create mode 100644 clusters/[REDACTED_CLUSTER_NAME]/apps/20-arc.yaml
+ create mode 100644 clusters/[REDACTED_CLUSTER_NAME]/apps/30-monitoring.yaml
+ create mode 100644 clusters/[REDACTED_CLUSTER_NAME]/apps/40-arc-intel-and-agent.yaml
+ create mode 100644 clusters/[REDACTED_CLUSTER_NAME]/manifests/agent/kustomization.yaml
+ create mode 100644 clusters/[REDACTED_CLUSTER_NAME]/manifests/arc-intel/argocd-token.yaml
+ create mode 100644 clusters/[REDACTED_CLUSTER_NAME]/manifests/arc-intel/kustomization.yaml
+ create mode 100644 clusters/[REDACTED_CLUSTER_NAME]/manifests/arc-intel/policy.yaml
+ create mode 100644 clusters/[REDACTED_CLUSTER_NAME]/manifests/platform-secrets/secrets.yaml
+ create mode 100644 clusters/[REDACTED_CLUSTER_NAME]/root-app.yaml
+ create mode 100644 clusters/[REDACTED_CLUSTER_NAME]/runner-scale-sets/arc-runner-set/values.yaml
+ create mode 100644 clusters/[REDACTED_CLUSTER_NAME]/values/arc-controller.yaml
+ create mode 100644 clusters/[REDACTED_CLUSTER_NAME]/values/kube-prometheus-stack.yaml
+ create mode 100644 clusters/render.py
+ create mode 100644 demo/offline/cluster.yaml
+ create mode 100644 demo/prompts.md
+ create mode 100755 demo/scripts/adopt-existing-eks.sh
+ create mode 100755 demo/scripts/run-offline.sh
+ create mode 100755 demo/scripts/setup-eks.sh
+ create mode 100755 demo/scripts/setup-existing-eks.sh
+ create mode 100755 demo/scripts/setup-kind.sh
+ create mode 100755 demo/scripts/simulate-drift.sh
+ create mode 100644 demo/values/eks-runner-placement.yaml
+ create mode 100644 demo/values/legacy-build.yaml
+ create mode 100644 demo/values/linux-standard.yaml
+ create mode 100644 deploy/digest/cronjob.yaml
+ create mode 100644 deploy/digest/digest.py
+ create mode 100644 deploy/digest/kustomization.yaml
+ create mode 100644 deploy/eks/cluster.yaml
+ create mode 100644 deploy/eks/kagent/kustomization.yaml
+ create mode 100644 deploy/eks/kagent/model-config-bedrock.yaml
+ create mode 100644 deploy/eks/mcp-server/argocd-token.yaml
+ create mode 100644 deploy/eks/mcp-server/kustomization.yaml
+ create mode 100644 deploy/eks/monitoring/kube-prometheus-stack-amp.yaml
+ create mode 100644 deploy/eks/runner-baseline/github-app-secret.yaml
+ create mode 100644 deploy/eks/runner-baseline/kustomization.yaml
+ create mode 100644 deploy/eks/runner-baseline/network-policy.yaml
+ create mode 100644 deploy/existing-eks/kagent/kustomization.yaml
+ create mode 100644 deploy/existing-eks/mcp-server/kustomization.yaml
+ create mode 100644 deploy/existing-eks/mcp-server/policy.yaml
+ create mode 100644 deploy/kagent/agent.yaml
+ create mode 100644 deploy/kagent/kustomization.yaml
+ create mode 100644 deploy/kagent/model-config.yaml
+ create mode 100644 deploy/kagent/remote-mcp-server.yaml
+ create mode 100644 deploy/mcp-server/deployment.yaml
+ create mode 100644 deploy/mcp-server/kustomization.yaml
+ create mode 100644 deploy/mcp-server/namespace.yaml
+ create mode 100644 deploy/mcp-server/policy.yaml
+ create mode 100644 deploy/mcp-server/rbac.yaml
+ create mode 100644 deploy/monitoring/monitoring.yaml
+ create mode 100644 docs/diagram/architecture.png
+ create mode 100644 gitops/apps/platform.yaml
+ create mode 100644 gitops/apps/runner-scale-sets.yaml
+ create mode 100644 gitops/argocd/arc-intel-account.yaml
+ create mode 100644 gitops/bootstrap/root-app.yaml
+ create mode 100644 gitops/projects/projects.yaml
+ create mode 100644 gitops/repos/oci-helm-repos.yaml
+ create mode 100644 mcp-server/Dockerfile
+ create mode 100644 mcp-server/arc_intel/__init__.py
+ create mode 100644 mcp-server/arc_intel/argocd.py
+ create mode 100644 mcp-server/arc_intel/audit.py
+ create mode 100644 mcp-server/arc_intel/cluster.py
+ create mode 100644 mcp-server/arc_intel/drift.py
+ create mode 100644 mcp-server/arc_intel/engine.py
+ create mode 100644 mcp-server/arc_intel/metrics.py
+ create mode 100644 mcp-server/arc_intel/policy.py
+ create mode 100644 mcp-server/arc_intel/rules.py
+ create mode 100644 mcp-server/arc_intel/server.py
+ create mode 100644 mcp-server/pyproject.toml
+ create mode 100644 mcp-server/tests/__init__.py
+ create mode 100644 mcp-server/tests/fixtures.py
+ create mode 100644 mcp-server/tests/test_argocd.py
+ create mode 100644 mcp-server/tests/test_audit.py
+ create mode 100644 mcp-server/tests/test_engine.py
+ create mode 100644 runner-scale-sets/_common/eks.yaml
+ create mode 100644 runner-scale-sets/arm64-builds/values.yaml
+ create mode 100644 runner-scale-sets/linux-large/values.yaml
+ create mode 100644 runner-scale-sets/linux-standard/values.yaml
+✓ Deleted local branch develop and switched to branch main
+✓ Deleted remote branch develop
+clusters/[REDACTED_CLUSTER_NAME]/ADOPTION-NOTES.md
+clusters/[REDACTED_CLUSTER_NAME]/apps/00-projects-and-repos.yaml
+clusters/[REDACTED_CLUSTER_NAME]/apps/10-secrets.yaml
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ pwd
+[REDACTED_LOCAL_PATH]
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ ls -ltra
+total 56
+drwxr-xr-x   3 ajay  staff     96 Oct 18 15:38 ..
+drwxr-xr-x@  8 ajay  staff    256 Oct 18 16:25 .idea
+-rw-r--r--   1 ajay  staff    227 Oct 18 17:01 .gitignore
+-rw-r--r--   1 ajay  staff     56 Oct 18 17:01 CODEOWNERS
+-rw-r--r--   1 ajay  staff   1293 Oct 18 17:01 CONTRIBUTING.mg
+-rw-r--r--   1 ajay  staff  12409 Oct 18 17:01 README.md
+drwxr-xr-x@  6 ajay  staff    192 Oct 18 17:01 clusters
+drwxr-xr-x   6 ajay  staff    192 Oct 18 17:01 demo
+drwxr-xr-x   8 ajay  staff    256 Oct 18 17:01 deploy
+drwxr-xr-x   3 ajay  staff     96 Oct 18 17:01 docs
+drwxr-xr-x   7 ajay  staff    224 Oct 18 17:01 gitops
+drwxr-xr-x   6 ajay  staff    192 Oct 18 17:01 mcp-server
+drwxr-xr-x  15 ajay  staff    480 Oct 18 17:01 .
+drwxr-xr-x   6 ajay  staff    192 Oct 18 17:01 runner-scale-sets
+drwxr-xr-x  15 ajay  staff    480 Oct 18 17:01 .git
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$

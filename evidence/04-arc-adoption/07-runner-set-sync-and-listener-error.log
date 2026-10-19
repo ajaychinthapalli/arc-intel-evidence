@@ -1,0 +1,59 @@
+# Captured: Sun 2026-10-18 18:37 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: attachment f1ee8f3e-attachment.txt. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ argocd app sync arc-runners-arc-runner-set
+kubectl -n arc-systems get pods -l app.kubernetes.io/component=runner-scale-set-listener
+kubectl get autoscalingrunnerset -n arc-runners arc-runner-set \
+  -o jsonpath='{.metadata.annotations.argocd\.argoproj\.io/tracking-id}{"\n"}'
+TIMESTAMP                  GROUP                            KIND             NAMESPACE                   NAME                   STATUS   HEALTH        HOOK  MESSAGE
+2026-10-18T18:36:56-07:00                             ServiceAccount        arc-runners  arc-runner-set-gha-rs-no-permission    Synced                       serviceaccount/arc-runner-set-gha-rs-no-permission serverside-applied
+2026-10-18T18:36:56-07:00  rbac.authorization.k8s.io        Role            arc-runners  arc-runner-set-gha-rs-manager          Synced                       role.rbac.authorization.k8s.io/arc-runner-set-gha-rs-manager serverside-applied
+2026-10-18T18:36:56-07:00  rbac.authorization.k8s.io  RoleBinding           arc-runners  arc-runner-set-gha-rs-manager          Synced                       rolebinding.rbac.authorization.k8s.io/arc-runner-set-gha-rs-manager serverside-applied
+2026-10-18T18:36:56-07:00  actions.github.com         AutoscalingRunnerSet  arc-runners        arc-runner-set                   Synced                       autoscalingrunnerset.actions.github.com/arc-runner-set serverside-applied
+
+Name:               argocd/arc-runners-arc-runner-set
+Project:            arc-runners
+Server:             https://kubernetes.default.svc
+Namespace:          arc-runners
+URL:                https://argocd.example.com/applications/arc-runners-arc-runner-set
+Sources:
+- Repo:             ghcr.io/actions/actions-runner-controller-charts
+  Target:           0.14.2
+  Helm Values:      $values/clusters/[REDACTED_CLUSTER_NAME]/runner-scale-sets/arc-runner-set/values.yaml
+- Repo:             https://github.com/ajaychinthapalli/arc-intel.git
+  Target:           main
+  Ref:              values
+SyncWindow:         Sync Allowed
+Sync Policy:        Manual
+Sync Status:        Synced to 0.14.2
+Health Status:      Healthy
+
+Operation:          Sync
+Sync Revision:      0.14.2, fbe76566a806dede1acb31cf8708aa5ddb127c37
+Phase:              Succeeded
+Start:              2026-10-18 18:36:55 -0700 MST
+Finished:           2026-10-18 18:36:56 -0700 MST
+Duration:           1s
+Message:            successfully synced (all tasks run)
+
+GROUP                      KIND                  NAMESPACE    NAME                                 STATUS  HEALTH  HOOK  MESSAGE
+                           ServiceAccount        arc-runners  arc-runner-set-gha-rs-no-permission  Synced                serviceaccount/arc-runner-set-gha-rs-no-permission serverside-applied
+rbac.authorization.k8s.io  Role                  arc-runners  arc-runner-set-gha-rs-manager        Synced                role.rbac.authorization.k8s.io/arc-runner-set-gha-rs-manager serverside-applied
+rbac.authorization.k8s.io  RoleBinding           arc-runners  arc-runner-set-gha-rs-manager        Synced                rolebinding.rbac.authorization.k8s.io/arc-runner-set-gha-rs-manager serverside-applied
+actions.github.com         AutoscalingRunnerSet  arc-runners  arc-runner-set                       Synced                autoscalingrunnerset.actions.github.com/arc-runner-set serverside-applied
+NAME                               READY   STATUS   RESTARTS   AGE
+arc-runner-set-694df84f-listener   0/1     Error    0          4s
+arc-runners-arc-runner-set:actions.github.com/AutoscalingRunnerSet:arc-runners/arc-runner-set
+bash-5.3$ 
+bash-5.3$ 
+bash-5.3$ kubectl -n arc-intel describe rs -l app.kubernetes.io/name=arc-intel-mcp | sed -n '/Events:/,$p' | tail -4
+kubectl -n amazon-cloudwatch get pods -l app.kubernetes.io/name=amazon-cloudwatch-observability \
+  -o custom-columns='POD:.metadata.name,AGE:.metadata.creationTimestamp'
+  Warning  FailedCreate  5m48s                replicaset-controller  Error creating: pods "arc-intel-mcp-67f56d6d44-79vp6" is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "opentelemetry-auto-instrumentation-java" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "opentelemetry-auto-instrumentation-java" must set securityContext.capabilities.drop=["ALL"])
+  Warning  FailedCreate  5m48s                replicaset-controller  Error creating: pods "arc-intel-mcp-67f56d6d44-jrcr5" is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "opentelemetry-auto-instrumentation-java" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "opentelemetry-auto-instrumentation-java" must set securityContext.capabilities.drop=["ALL"])
+  Warning  FailedCreate  5m47s                replicaset-controller  Error creating: pods "arc-intel-mcp-67f56d6d44-696rz" is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "opentelemetry-auto-instrumentation-java" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "opentelemetry-auto-instrumentation-java" must set securityContext.capabilities.drop=["ALL"])
+  Warning  FailedCreate  20s (x8 over 5m46s)  replicaset-controller  (combined from similar events): Error creating: pods "arc-intel-mcp-67f56d6d44-zgt5k" is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "opentelemetry-auto-instrumentation-java" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "opentelemetry-auto-instrumentation-java" must set securityContext.capabilities.drop=["ALL"])
+POD                                                               AGE
+amazon-cloudwatch-observability-controller-manager-698565cmdldj   2026-10-19T01:30:07Z
+bash-5.3$

@@ -1,0 +1,29 @@
+# Captured: Sun 2026-10-18 18:11 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat turn 74. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ $S bootstrap
+application.argoproj.io/[REDACTED_CLUSTER_NAME]-root created
+
+==> Waiting for the ARC applications to appear (they do not sync on their own)
+APP                     SYNC        HEALTH
+[REDACTED_CLUSTER_NAME]-root     OutOfSync   Healthy
+arc-controller          OutOfSync   Healthy
+external-secrets        Synced      Healthy
+kube-prometheus-stack   OutOfSync   Missing
+platform-secrets        Synced      Healthy
+
+Review what Argo CD would change on the adopted ARC apps before the first sync:
+  argocd app diff arc-controller
+  argocd app diff arc-runners-<release>
+Expected: tracking annotations only (plus nothing else). Then:
+  argocd app sync arc-controller && argocd app sync arc-runners-<release>
+Finally: demo/scripts/adopt-existing-eks.sh verify
+bash-5.3$ kubectl -n argocd get applications -o custom-columns='APP:.metadata.name,SYNC:.status.sync.status,HEALTH:.status.health.status'
+APP                     SYNC        HEALTH
+[REDACTED_CLUSTER_NAME]-root     OutOfSync   Healthy
+arc-controller          OutOfSync   Healthy
+external-secrets        Synced      Healthy
+kube-prometheus-stack   OutOfSync   Missing
+platform-secrets        Synced      Healthy
+bash-5.3$

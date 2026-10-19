@@ -1,0 +1,59 @@
+# Captured: Sun 2026-10-18 19:25 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: chat message. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ argocd app get [REDACTED_CLUSTER_NAME]-root --refresh >/dev/null
+sleep 20
+kubectl -n argocd get applications arc-controller arc-runners-arc-runner-set \
+  -o custom-columns='NAME:.metadata.name,AUTO:.spec.syncPolicy.automated,SYNC:.status.sync.status,REV:.status.sync.revision'
+NAME                         AUTO                             SYNC     REV
+arc-controller               map[prune:false selfHeal:true]   Synced   <none>
+arc-runners-arc-runner-set   map[prune:false selfHeal:true]   Synced   <none>
+bash-5.3$ 
+bash-5.3$ sleep 30
+kubectl -n arc-runners get autoscalingrunnerset arc-runner-set -o jsonpath='{.spec.maxRunners}{"\n"}'   # expect 3
+3
+bash-5.3$ kubectl -n arc-runners patch autoscalingrunnerset arc-runner-set --type=merge -p '{"spec":{"maxRunners":10}}'
+sleep 30
+kubectl -n arc-runners get autoscalingrunnerset arc-runner-set -o jsonpath='{.spec.maxRunners}{"\n"}'   # 3 within seconds
+sleep 120   # give CloudWatch time to index the audit events
+ask "Has anyone changed arc-runners/arc-runner-set outside Git recently? Who, when, and what happened to the change?"
+autoscalingrunnerset.actions.github.com/arc-runner-set patched
+3
+**Verdict: currently healthy & Synced — but two out-of-band `kubectl` patches were made outside Git on 2026-10-19, and Argo CD's self-heal reverted both.**
+
+---
+
+## Out-of-band writes (the important ones)
+
+| Time (UTC) | Who | Tool | What happened |
+|---|---|---|---|
+| 2026-10-19 02:16:02 | `[REDACTED_AWS_ARN]` from `[REDACTED_IP_ADDRESS]` | `kubectl` v1.37.0 (macOS/arm64) | **kubectl patch** — bypassed Git/Argo |
+| 2026-10-19 02:22:43 | `[REDACTED_AWS_ARN]` from `[REDACTED_IP_ADDRESS]` | `kubectl` v1.37.0 (macOS/arm64) | **kubectl patch** — bypassed Git/Argo (again, ~6 min later) |
+| 2026-10-16 20:22:52 | `[REDACTED_AWS_ARN]` from `[REDACTED_IP_ADDRESS]` | Helm 4.2.4 | Helm upgrade (legitimate, likely a values change) |
+| 2026-10-13 04:52:15 | `[REDACTED_AWS_ARN]` from `[REDACTED_IP_ADDRESS]` | Helm 4.2.4 | Helm upgrade (legitimate) |
+
+---
+
+## What happened to the out-of-band changes?
+
+✅ **Argo CD self-healed both of them.** The drift report shows `self_healed: true` and zero drifted fields — meaning Argo detected the `kubectl` patches and immediately reconciled the resource back to the Git-declared state. The last successful automated sync completed at **2026-10-19 02:22:43 Z**, seconds after the second rogue patch. The live state is currently **Synced + Healthy**.
+
+---
+
+## Key facts
+
+- **Identity:** Both `kubectl` patches came from the **AWS root account** (`[REDACTED_AWS_ARN]`) — no assumed role, no session name. Identity source is `eks_audit_log` (confirmed).
+- **Source IP:** `[REDACTED_IP_ADDRESS]` in both cases — same machine/person.
+- **Argo CD app:** `arc-runners-arc-runner-set` in project `arc-runners`, chart `gha-runner-scale-set @ 0.14.2` from `ghcr.io/actions/actions-runner-controller-charts`. Self-heal is **ON**, which is why the revert was automatic.
+- **No current drift** — the live state is clean.
+
+---
+
+## Recommended actions
+
+1. **🔴 Process issue — root account abuse:** Using the AWS root account for direct `kubectl` operations is a critical IAM hygiene violation. The root account should have no EKS access. Rotate/revoke its kubeconfig access immediately and investigate why it was used.
+2. **Lock down direct kubectl access:** Enforce an OPA/Kyverno admission policy that denies patches to `AutoscalingRunnerSet` from any principal other than `argocd-application-controller` and `arc-gha-rs-controller`. This prevents the window where a change exists before Argo reverts it.
+3. **Review the intent:** Find out *what* those patches were trying to do. If it was a legitimate change, it should go through a PR to the Argo CD source repo — no direct `kubectl` patches on GitOps-managed resources.
+4. **Alert on out-of-band writes:** Wire a CloudWatch metric filter on this log group for non-Argo, non-controller patches to `autoscalingrunnersets` and page on it.
+bash-5.3$

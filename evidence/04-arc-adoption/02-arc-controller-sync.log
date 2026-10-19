@@ -1,0 +1,71 @@
+# Captured: Sun 2026-10-18 18:26 (America/Phoenix, UTC-7)
+# Cluster: [REDACTED_CLUSTER_NAME] (us-east-2)   Operator terminal: macOS, bash 5.3
+# Source: attachment 774f6875-attachment.txt. Raw terminal output, unedited except: public IP masked.
+
+bash-5.3$ argocd app sync arc-controller
+TIMESTAMP                  GROUP                            KIND                 NAMESPACE                   NAME                        STATUS    HEALTH        HOOK  MESSAGE
+2026-10-18T18:25:42-07:00                             ServiceAccount            arc-systems  arc-gha-rs-controller                     OutOfSync                       
+2026-10-18T18:25:42-07:00  apiextensions.k8s.io       CustomResourceDefinition               autoscalingrunnersets.actions.github.com    Synced   Healthy              
+2026-10-18T18:25:42-07:00  rbac.authorization.k8s.io  ClusterRole                            arc-gha-rs-controller                     OutOfSync                       
+2026-10-18T18:25:42-07:00  rbac.authorization.k8s.io        Role                arc-systems  arc-gha-rs-controller-listener            OutOfSync                       
+2026-10-18T18:25:42-07:00  apiextensions.k8s.io       CustomResourceDefinition               autoscalinglisteners.actions.github.com     Synced   Healthy              
+2026-10-18T18:25:42-07:00  apiextensions.k8s.io       CustomResourceDefinition               ephemeralrunners.actions.github.com         Synced   Healthy              
+2026-10-18T18:25:42-07:00  apiextensions.k8s.io       CustomResourceDefinition               ephemeralrunnersets.actions.github.com      Synced   Healthy              
+2026-10-18T18:25:42-07:00   apps                      Deployment                arc-systems  arc-gha-rs-controller                     OutOfSync  Healthy              
+2026-10-18T18:25:42-07:00  rbac.authorization.k8s.io  ClusterRoleBinding                     arc-gha-rs-controller                     OutOfSync                       
+2026-10-18T18:25:42-07:00  rbac.authorization.k8s.io  RoleBinding               arc-systems  arc-gha-rs-controller-listener            OutOfSync                       
+2026-10-18T18:25:44-07:00         ServiceAccount  arc-systems  arc-gha-rs-controller    Synced                       
+2026-10-18T18:25:46-07:00  rbac.authorization.k8s.io  ClusterRoleBinding        arc-systems  arc-gha-rs-controller                      Running    Synced              clusterrolebinding.rbac.authorization.k8s.io/arc-gha-rs-controller serverside-applied
+2026-10-18T18:25:46-07:00  rbac.authorization.k8s.io  RoleBinding               arc-systems  arc-gha-rs-controller-listener            OutOfSync                       rolebinding.rbac.authorization.k8s.io/arc-gha-rs-controller-listener serverside-applied
+2026-10-18T18:25:46-07:00   apps                      Deployment                arc-systems  arc-gha-rs-controller                     OutOfSync  Healthy              deployment.apps/arc-gha-rs-controller serverside-applied
+2026-10-18T18:25:46-07:00                             ServiceAccount            arc-systems  arc-gha-rs-controller                       Synced                        serviceaccount/arc-gha-rs-controller serverside-applied
+2026-10-18T18:25:46-07:00  apiextensions.k8s.io       CustomResourceDefinition  arc-systems  ephemeralrunners.actions.github.com        Running    Synced              customresourcedefinition.apiextensions.k8s.io/ephemeralrunners.actions.github.com serverside-applied
+2026-10-18T18:25:46-07:00  apiextensions.k8s.io       CustomResourceDefinition  arc-systems  autoscalingrunnersets.actions.github.com   Running    Synced              customresourcedefinition.apiextensions.k8s.io/autoscalingrunnersets.actions.github.com serverside-applied
+2026-10-18T18:25:46-07:00  rbac.authorization.k8s.io  ClusterRole               arc-systems  arc-gha-rs-controller                      Running    Synced              clusterrole.rbac.authorization.k8s.io/arc-gha-rs-controller serverside-applied
+2026-10-18T18:25:46-07:00  apiextensions.k8s.io       CustomResourceDefinition  arc-systems  autoscalinglisteners.actions.github.com    Running    Synced              customresourcedefinition.apiextensions.k8s.io/autoscalinglisteners.actions.github.com serverside-applied
+2026-10-18T18:25:46-07:00  rbac.authorization.k8s.io        Role                arc-systems  arc-gha-rs-controller-listener            OutOfSync                       role.rbac.authorization.k8s.io/arc-gha-rs-controller-listener serverside-applied
+2026-10-18T18:25:46-07:00  apiextensions.k8s.io       CustomResourceDefinition  arc-systems  ephemeralrunnersets.actions.github.com     Running    Synced              customresourcedefinition.apiextensions.k8s.io/ephemeralrunnersets.actions.github.com serverside-applied
+
+Name:               argocd/arc-controller
+Project:            arc-platform
+Server:             https://kubernetes.default.svc
+Namespace:          arc-systems
+URL:                https://argocd.example.com/applications/arc-controller
+Sources:
+- Repo:             ghcr.io/actions/actions-runner-controller-charts
+  Target:           0.14.2
+  Helm Values:      $values/clusters/[REDACTED_CLUSTER_NAME]/values/arc-controller.yaml
+- Repo:             https://github.com/ajaychinthapalli/arc-intel.git
+  Target:           main
+  Ref:              values
+SyncWindow:         Sync Allowed
+Sync Policy:        Manual
+Sync Status:        Synced to 0.14.2
+Health Status:      Healthy
+
+Operation:          Sync
+Sync Revision:      0.14.2, 4e79346304b89d8dae0f1fad7679936cb1dc63e2
+Phase:              Succeeded
+Start:              2026-10-18 18:25:42 -0700 MST
+Finished:           2026-10-18 18:25:46 -0700 MST
+Duration:           4s
+Message:            successfully synced (all tasks run)
+
+GROUP                      KIND                      NAMESPACE    NAME                                      STATUS   HEALTH   HOOK  MESSAGE
+                           ServiceAccount            arc-systems  arc-gha-rs-controller                     Synced                  serviceaccount/arc-gha-rs-controller serverside-applied
+apiextensions.k8s.io       CustomResourceDefinition  arc-systems  ephemeralrunnersets.actions.github.com    Running  Synced         customresourcedefinition.apiextensions.k8s.io/ephemeralrunnersets.actions.github.com serverside-applied
+apiextensions.k8s.io       CustomResourceDefinition  arc-systems  ephemeralrunners.actions.github.com       Running  Synced         customresourcedefinition.apiextensions.k8s.io/ephemeralrunners.actions.github.com serverside-applied
+apiextensions.k8s.io       CustomResourceDefinition  arc-systems  autoscalinglisteners.actions.github.com   Running  Synced         customresourcedefinition.apiextensions.k8s.io/autoscalinglisteners.actions.github.com serverside-applied
+apiextensions.k8s.io       CustomResourceDefinition  arc-systems  autoscalingrunnersets.actions.github.com  Running  Synced         customresourcedefinition.apiextensions.k8s.io/autoscalingrunnersets.actions.github.com serverside-applied
+rbac.authorization.k8s.io  ClusterRole               arc-systems  arc-gha-rs-controller                     Running  Synced         clusterrole.rbac.authorization.k8s.io/arc-gha-rs-controller serverside-applied
+rbac.authorization.k8s.io  ClusterRoleBinding        arc-systems  arc-gha-rs-controller                     Running  Synced         clusterrolebinding.rbac.authorization.k8s.io/arc-gha-rs-controller serverside-applied
+rbac.authorization.k8s.io  Role                      arc-systems  arc-gha-rs-controller-listener            Synced                  role.rbac.authorization.k8s.io/arc-gha-rs-controller-listener serverside-applied
+rbac.authorization.k8s.io  RoleBinding               arc-systems  arc-gha-rs-controller-listener            Synced                  rolebinding.rbac.authorization.k8s.io/arc-gha-rs-controller-listener serverside-applied
+apps                       Deployment                arc-systems  arc-gha-rs-controller                     Synced   Healthy        deployment.apps/arc-gha-rs-controller serverside-applied
+apiextensions.k8s.io       CustomResourceDefinition               autoscalinglisteners.actions.github.com   Synced   Healthy        
+apiextensions.k8s.io       CustomResourceDefinition               autoscalingrunnersets.actions.github.com  Synced   Healthy        
+apiextensions.k8s.io       CustomResourceDefinition               ephemeralrunners.actions.github.com       Synced   Healthy        
+apiextensions.k8s.io       CustomResourceDefinition               ephemeralrunnersets.actions.github.com    Synced   Healthy        
+rbac.authorization.k8s.io  ClusterRole                            arc-gha-rs-controller                     Synced                  
+rbac.authorization.k8s.io  ClusterRoleBinding                     arc-gha-rs-controller                     Synced                  
+bash-5.3$
